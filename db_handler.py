@@ -24,8 +24,6 @@ main_db = DatabaseHandler(db_name=main_db_name, db_dir=db_folder_dir)
 main_table_name = 'full_data'
 
 def main(target_file_folder_dir, chosen_file):
-    #print("DEBUG: Running db_handler main...\n")
-
     if main_db.check_db_existance() is False:
         print("Database does not exist, setting it up:")
         
@@ -39,21 +37,19 @@ def main(target_file_folder_dir, chosen_file):
         return
         
 def create_main_db(dataframe):
-
     df_full = DataCleaner(dataframe)
     col_2_split = 'Path'
     split_columns = ['Period', 'Subject', 'Path3']
-    df_full.split_column_multiple(columnName=col_2_split, separator='\\', newColList=split_columns)
-    df_full.normalize_strings(columnName='Subject')
+    df_full.split_column_into_multiple(columnName=col_2_split, separator='\\', newColList=split_columns)
+    df_full.normalize_column_strings(columnName='Subject')
+    df_full.normalize_column_strings(columnName='Period')
     df_full.convert_dataframe_dates(dateColumn='Start Date')
     df_full.convert_comma_to_dot(columnName='Time Spent (Hrs)')
-    df_full.show_missing_files()
     
     df = df_full.dataframe
     columns = df.columns
     data_types = df.dtypes
     table_dict = dict(zip(columns, data_types))
-
     
     SQL_table_dict = main_db.convert_dict_valType_to_sqlType(table_dict)
     main_db.settup_db(tableItems=SQL_table_dict, mainTable_name=main_table_name)
