@@ -30,10 +30,10 @@ def main(target_file_folder_dir, chosen_file):
         excelCSV_raw = ExcelDataExtract(file_folder_dir=target_file_folder_dir)
         excelCSV_raw.load_csv_to_dataframe(chosen_file)
 
-        create_main_db(excelCSV_raw.dataframe)
+        create_main_db()
 
     else:
-        print("Database already exists. Update function not yet implemented...") #TODO: add update database function...
+        print("Database already exists. Update function not yet implemented...")
         return
         
 def create_main_db(dataframe):
@@ -52,7 +52,7 @@ def create_main_db(dataframe):
     table_dict = dict(zip(columns, data_types))
     
     SQL_table_dict = main_db.convert_dict_valType_to_sqlType(table_dict)
-    main_db.settup_db(tableItems=SQL_table_dict, mainTable_name=main_table_name)
+    main_db.create_db_table(tableItems=SQL_table_dict, mainTable_name=main_table_name)
     main_db.insert_data_from_df(dataframe=df)
     main_db.close_connection()
 
