@@ -1,11 +1,10 @@
 import sys, os
-import db_handler, hours_per_subject, main_menu
+import db_handler, main_menu
 
 if __name__ == "__main__":
     print("\nRunning program")
     
-    target_file_folder_dir = os.path.dirname(os.path.abspath(__file__)) 
-    chosen_file = '3º FarmNutr TDL_Log.csv'
-    db_handler.main(target_file_folder_dir, chosen_file)
+    db_handler.main()
 
-    main_menu.run_main_menu()
+    main_menu.main_menu_sequence()
+
