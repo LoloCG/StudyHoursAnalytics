@@ -2,12 +2,7 @@ import os,sys
 import pandas as pd
 import matplotlib.pyplot as plt
 
-sys.path.append(r'C:\Users\Lolo\Desktop\Programming\GITRepo\PythonLearn-Resources\Data analysis\Matplotlib')    
-from MODULE_matplot_pandas import DataPlotter
-sys.path.append(r'C:\Users\Lolo\Desktop\Programming\GITRepo\PythonLearn-Resources\Data analysis\Pandas')    
-from MODULE_pandas_basic import DataCleaner, DataFrameTransformer
-sys.path.append(r'C:\Users\Lolo\Desktop\Programming\GITRepo\PythonLearn-Resources\Data analysis\Pandas\Excel')
-from MODULE_pandas_excel_functions import ExcelDataExtract
+from modules import DataPlotter, DataCleaner, DataFrameTransformer, ExcelDataExtract
 
 def show_weekly_hours_per_subject(dataframe):
     

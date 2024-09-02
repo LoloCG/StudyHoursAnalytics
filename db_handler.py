@@ -3,12 +3,7 @@ main_verbose = True
 import sys, os
 import pandas as pd
 
-sys.path.append(r'C:\Users\Lolo\Desktop\Programming\GITRepo\PythonLearn-Resources\Databases\SQLite')
-from MODULE_SQLite_functions import DatabaseHandler
-sys.path.append(r'C:\Users\Lolo\Desktop\Programming\GITRepo\PythonLearn-Resources\Data analysis\Pandas\Excel')
-from MODULE_pandas_excel_functions import ExcelDataExtract
-sys.path.append(r'C:\Users\Lolo\Desktop\Programming\GITRepo\PythonLearn-Resources\Data analysis\Pandas')
-from MODULE_pandas_basic import DataCleaner
+from modules import DatabaseHandler, DataCleaner, ExcelDataExtract
 
 main_db_name = 'StudyAnalysis.db'
 db_folder_dir = os.path.dirname(os.path.abspath(__file__))
