@@ -1,19 +1,27 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
+import sqlite3
 
 # ========================= MODULE_matplot_pandas/DataPlotter =========================
-# =================================== 2024/02/09 =========================
+# =================================== 2024.02.09.1 =========================
 class DataPlotter: 
     def __init__(self, dataframe: pd.DataFrame):
         self.dataframe = dataframe
 
+        print()
+
+    def manual_set_chart_titles(self,xy_labels,chart_title):
+        self.x_label = xy_labels[0]
+        self.y_label = xy_labels[1]
+
+        self.chart_title = chart_title
+    
+    def identify_column_hierarchy(self,verbose=False):
         self.categorical_columns = None
         self.numerical_columns = None
         self.highest_hierarchy_column = None
 
-        print()
-
-    def identify_column_hierarchy(self):
         df = self.dataframe
         cat_cols = []
         Num_col = None
@@ -33,25 +41,44 @@ class DataPlotter:
             elif coltype in ['float64','int64']:
                 Num_col = colname
 
-        #print(f"Category columns: {list(cat_cols)}")
-        #print(f"Numerical columns: {Num_col}")
-        print(f"Categorical columm with highest hierarchy: {first_hier_col}")
-        #categ_in_highest_hierarch = list(df[first_hier_col].unique())
-        #print(f"Categories: {categ_in_highest_hierarch[0]}, {categ_in_highest_hierarch[1]}")
+        if verbose: print(f"Categorical columm with highest hierarchy: {first_hier_col}")
 
         self.highest_hierarchy_column = first_hier_col        
         self.categorical_columns = cat_cols
         self.numerical_columns = Num_col
 
     def plot_stacked_bar_chart(self):
-        print()
-        clean_dataframe.plot(kind='bar', stacked=True, figsize=(10, 6))
+        df = self.dataframe
 
-        plt.title('Weekly Hours Spent on Subjects')
-        plt.xlabel('Week')
-        plt.ylabel('Time Spent (Hrs)')
-        plt.legend(title='Subject')
-        plt.xticks(rotation=45)
+        figsize = (10,6)
+        legend_title = 'Subject'
+        colormap='tab20'
+        
+        ax = df.plot(kind='bar', width=0.75, stacked=True, figsize=figsize, colormap=colormap)
+        
+        # Get the legend handles and labels
+        # handles, labels = ax.get_legend_handles_labels()
+
+        subjects = df.columns.get_level_values('Subject').unique()
+        subjects = df.columns.get_level_values('Subject').unique()
+        subjects_list = list(subjects)
+        # subjects = df['Subject'].unique()
+        print(f"\tDEBUG: subjects from df:\n{subjects_list}\n")
+
+        # Set the legend with the filtered handles and labels
+        # ax.legend(subjects, subjects, title='Subject', loc='best')
+        
+        plt.title(self.chart_title,fontsize=16)
+        plt.xlabel(self.x_label,fontsize=14)
+        plt.ylabel(self.y_label,fontsize=14)
+
+        # plt.legend(title=legend_title, loc='best')
+        
+        ticks = range(0, len(df.index), 4)
+        ax.set_xticks(ticks)
+        ax.set_xticklabels([df.index[i] for i in ticks], rotation=45,ha='right')
+        # plt.style.use('seaborn-v0_8-pastel')
+
         plt.tight_layout()
 
         plt.show()
@@ -405,7 +432,6 @@ class DatabaseHandler:
             print(f"An error occurred: {e}")
             self.connector.rollback()
 
-
 # ========================= MODULE_pandas_basic/DataCleaner =========================
 # =================================== 2024/02/09 =========================
 class DataCleaner:
@@ -541,3 +567,136 @@ class DataFrameTransformer:
         df = df.groupby([colsToGroup[1],colsToGroup[2]]).sum().reset_index()
 
         self.dataframe = df
+
+# ========================= MODULE_pandas_excel_functions/ExcelDataExtract =========================
+# =================================== 2024/02/09 =========================
+class ExcelDataExtract:
+    def __init__(self, file_folder_dir = None, chosen_file = None):
+        self.main_dir = os.path.dirname(os.path.abspath(__file__))
+        self.file_folder_dir = file_folder_dir
+        self.chosen_file = None
+        self.file_type = None
+
+        self.excels_in_folders = []
+
+        self.selected_sheets = None
+
+        self.dataframe = None
+        self.dataframe_type = None
+
+    def load_excel_to_dataframe_dict(self, selected_sheets=None, importNaN=True):
+        df_dict = {}
+        full_file_path = os.path.join(self.file_folder_dir, self.chosen_file)
+
+        sheets_to_load = selected_sheets if selected_sheets else self.selected_sheets
+
+        for sheet in self.selected_sheets:
+            print(f"loading {sheet} into dataframe dictionary")
+
+            df = pd.read_excel(full_file_path, sheet_name=sheet)
+            
+            if importNaN: # First drops columns that have NaN or empty string as headers, then columns where all values are NaN
+                df = df.loc[:, df.columns.notnull()]
+                df = df.loc[:, df.columns != '']
+                df = df.dropna(axis=1, how='all')
+                
+            df_dict[sheet] = df
+
+        self.dataframe = df_dict
+        self.dataframe_type = type(self.dataframe) # Ensures that the dataframe type is <class 'dict'>
+        
+        #DEBUG: print(f"debug. df type: {self.dataframe_type}\n")
+
+    def load_csv_to_dataframe(self, chosen_file, encoding=None, delimiter=None, skiprows=None):
+        self.chosen_file = chosen_file
+
+        targetfile_path = os.path.join(self.file_folder_dir, self.chosen_file)
+        print(f"Extracting file {chosen_file} from path {targetfile_path}")
+        
+        df_raw = pd.read_csv(targetfile_path, encoding='utf-16', delimiter='\t', skiprows=1) # TODO: make dynamic selector of encoding, delimiter, skiprows...
+        
+        #DEBUG: print(f"Extracted df:\n{df_raw.head()}") 
+        #DEBUG: print(f"returning type: {type(df_raw)}")
+
+        self.dataframe = df_raw
+
+    def get_folder_excel_files(self, file_folder_dir=None, file_type = None):
+        '''
+        Searches the folder given for any excel extension file, printing any that exist and returning a list of the file names.
+        
+        Parameters:
+        file_folder_dir (str): The directory to search for Excel files.
+
+        Returns:
+        folder_excels (list): a list of strings of the excel files that are located in the folder direction.
+        '''
+        self.file_folder_dir = file_folder_dir
+
+        if not os.path.exists(file_folder_dir):
+            print(f"Directory {file_folder_dir} does not exist.\n")
+            return []
+        if not os.path.isdir(file_folder_dir):
+            print(f"{file_folder_dir} is not a directory.\n")
+            return []
+        
+        folder_files = os.listdir(file_folder_dir)
+        self.excels_in_folders = [file for file in folder_files if file.endswith(('.csv', '.xlsx', '.xls', '.xlsm'))]
+
+        print("Files in the folder:")
+        for index, file in enumerate(self.excels_in_folders):
+            print(f"{index + 1}: {file}")
+
+    def select_excelFile_fromFolder(self, excels_in_folders=None):
+        while True:
+            try:
+                choice = int(input(f"Enter the number of the file you want to open (1-{len(self.excels_in_folders)}): "))
+                if 1 <= choice <= len(self.excels_in_folders):
+                    file = self.excels_in_folders[choice - 1]
+                    break
+                else:
+                    print(f"Please enter a number between 1 and {len(self.excels_in_folders)}.")
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
+
+        print(f"chosen file: {file}")
+        
+        self.chosen_file = file
+    
+    def select_excelSheets_fromFile(self, full_file_path=None):
+        '''
+        '''
+        full_file_path = os.path.join(self.file_folder_dir, self.chosen_file)
+
+        # Determines the engine based on file extension
+        if full_file_path.endswith('.xlsx') or full_file_path.endswith('.xlsm'):
+            excel_file = pd.ExcelFile(full_file_path, engine='openpyxl')
+        elif full_file_path.endswith('.xls'):
+            excel_file = pd.ExcelFile(full_file_path, engine='xlrd')
+        else:
+            raise ValueError("Unsupported file format. \nPlease provide a .xlsm, .xlsx, or .xls file.")
+            return
+
+        sheet_names = excel_file.sheet_names
+        
+        for index, sheet in enumerate(sheet_names):
+            print(f"{index + 1}: {sheet}")
+        
+        user_input = input("Select sheets to load (comma-separated numbers, or enter blank for all): ")
+
+        if user_input.strip() == "":
+            self.selected_sheets = sheet_names
+        else:
+            selected_indices = [int(i) - 1 for i in user_input.split(',')]
+            self.selected_sheets = [sheet_names[i] for i in selected_indices]
+        
+        print(f"selected sheets: {str(self.selected_sheets)}")
+        print()
+
+    def detect_csv_delimiter(self): # TODO: finish this function
+        delimiters = [',', ';', '\\', '\t'] 
+        
+    def detect_csv_encoding(): # TODO: finish this function
+        encodings = ['utf-8', 'utf-8-sig', 'utf-16', 'latin1', 'iso-8859-1', 'cp1252']
+
+    def detect_csv_header_row():
+        print("TODO...")
