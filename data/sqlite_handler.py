@@ -1,5 +1,5 @@
 from SQLite_ORM.basics import *
-from SQLite_ORM.sqlite_pandas import insert_data_from_df
+from SQLite_ORM.pandas_addon import insert_data_from_df
 
 import sys,os
 
