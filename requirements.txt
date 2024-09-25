@@ -1,2 +1,2 @@
 pandas
-"SQLite-ORM[sqlite] @ git+https://github.com/LoloCG/Lolos-Packages.git#subdirectory=Databases/SQLite-ORM"
+SQLite_ORM[sqlite] @ git+https://github.com/LoloCG/Lolos_Packages.git#subdirectory=Databases/SQLite_ORM

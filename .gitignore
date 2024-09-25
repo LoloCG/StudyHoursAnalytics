@@ -1,2 +1,4 @@
 __pycache__
 StudyAnalysis.db
+venv/
+temporal/
