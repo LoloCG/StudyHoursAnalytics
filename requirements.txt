@@ -1,0 +1,2 @@
+pandas
+"SQLite-ORM[sqlite] @ git+https://github.com/LoloCG/Lolos-Packages.git#subdirectory=Databases/SQLite-ORM"
