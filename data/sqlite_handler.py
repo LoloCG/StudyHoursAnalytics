@@ -8,6 +8,12 @@ db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 main_table_name = 'main_table'
 
+def check_table(table_name=main_table_name):
+    db = DBManager(db_name=db_name, db_path=db_path)
+    with db.connector:
+        exists, has_rows = db.table_manager.check_table(main_table_name)
+    return exists, has_rows
+
 def create_and_append_df(df):
     db = DBManager(db_name=db_name, db_path=db_path)
 
