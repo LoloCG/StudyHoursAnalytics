@@ -9,4 +9,12 @@ Some of the functions include:
 - [ ] Display total hours per week through the Semester
 - [ ] Display daily study hours through the Semester, in comparison to previous academic Semesters
 
-# Example graphs
+# Separation of concerns
+- graphing
+- interface (CLI)
+- data retrieval
+- data cleaning
+- data analysis
+- database management (SQLite)
+- 
+- 
