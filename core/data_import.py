@@ -1,6 +1,7 @@
 import sys, os
 import Excel_Tools.import_export_utils as imex 
 import Data_Cleaning.data_cleaning_utils as dclean
+import pandas as pd
 
 def get_csv_file():
     chosen_file = '3º FarmNutr TDL_Log.csv'
@@ -24,8 +25,8 @@ def basic_clean(df_raw):
     cleaner.normalize_column_strings(column='Period')
     cleaner.normalize_column_strings(column='Subject')
 
-    cleaner.convert_df_dates(date_column='Start Date', single_col=True, keep_original=True)
-    cleaner.convert_df_dates(date_column='End Date', single_col=True, keep_original=True)
+    cleaner.convert_df_dates(date_column='Start Date', single_col=True)
+    cleaner.convert_df_dates(date_column='End Date', single_col=True)
     cleaner.convert_df_times(time_column='Start Time', single_col=True)
     cleaner.convert_df_times(time_column='End Time', single_col=True)
 
@@ -33,4 +34,36 @@ def basic_clean(df_raw):
     
     return cleaner.dataframe
 
-get_csv_file()
+def generate_subject_hours_dataframe(df_clean):
+    ''' '''
+    wanted_cols = ['Period', 'Subject', 'Time Spent (Hrs)', 'Start Date', 'Start Time']
+    df = df_clean[wanted_cols]
+
+    filter_values = ['1St Semester', '2Nd Semester']
+    filter_col = 'Period'
+    
+    # df['Week'] = df['Start Date'].dt.to_period('W-SUN')
+
+    subhr_df = df[df[filter_col].isin(filter_values)]
+    
+    return subhr_df
+
+def generate_weekly_hours_dataframe(df_clean):
+    ''' '''
+    wanted_cols = ['Period', 'Subject', 'Time Spent (Hrs)', 'Start Date', 'End Date', 'Start Time', 'End Time']
+    df = df_clean[wanted_cols]
+
+    filter_values = ['1St Semester', '2Nd Semester']
+    filter_col = 'Period'
+    df = df[df[filter_col].isin(filter_values)]
+
+    df['Start Date'] = pd.to_datetime(df['Start Date'])
+
+    df['Week'] = df['Start Date'].dt.to_period('W-SUN').astype(str)
+
+    df = df.groupby(['Period', 'Subject', 'Week'])['Time Spent (Hrs)'].sum().reset_index()
+    # df = df.groupby('Week')['Time Spent (Hrs)'].sum().reset_index()
+    
+    weekly_df = df
+
+    return weekly_df
