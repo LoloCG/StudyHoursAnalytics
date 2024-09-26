@@ -15,5 +15,8 @@ def main():
 
         weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
         data.add_weekly_hours(weekly_df)
+    
+        df_pivot = dimp.pivoter(weekly_df)
+        print(df_pivot)
 
 main()
