@@ -13,11 +13,12 @@ def main():
 
         subhr_df = dimp.generate_subject_hours_dataframe(df_clean)
         data.add_subject_hours(subhr_df)
+        dan.plot_daily_subj_hours_line(subhr_df)
 
         weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
         data.add_weekly_hours(weekly_df)
     
-        df_pivot = dimp.pivoter(weekly_df)
-        print(df_pivot)
+        df_pivot = dan.pivoter(weekly_df)
+        # dan.plot_week_hours_barchart(df_pivot)
 
 main()
