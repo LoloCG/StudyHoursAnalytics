@@ -1,5 +1,6 @@
 import core.data_import as dimp
 import data.sqlite_handler as data
+import core.data_analysis as dan
 
 def main():
     exists, has_rows = data.check_table()

@@ -98,8 +98,3 @@ def generate_weekly_hours_dataframe(df_clean):
 
     return weekly_df
 
-def pivoter(df): # This is not used yet
-    df_pivot = df.pivot_table(index='Week', columns=['Period', 'Subject'], values='Time Spent (Hrs)', fill_value=0)
-    df_pivot = df_pivot.sort_index()
-    
-    return df_pivot
