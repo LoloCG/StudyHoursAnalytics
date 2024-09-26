@@ -14,6 +14,28 @@ def get_csv_file():
     return df
 
 def basic_clean(df_raw):
+    def delete_negative_times(df):
+        import numpy as np
+        negval_condition = (df['Time Spent (Hrs)'] < 0) & (df['Type'] == 'Adjusted')
+        pos_rows = df[~negval_condition]
+        neg_rows = df[negval_condition]
+
+        date_threshold = pd.Timedelta(days=2) # threshold
+        time_threshold = 0.25
+
+        for _, neg_row in neg_rows.iterrows():
+            close_condition = (
+                (abs(pos_rows['Time Spent (Hrs)'] + neg_row['Time Spent (Hrs)']) < time_threshold) & # 6 + (-5.8) = 0.2
+                (abs(pos_rows['End Date'] - neg_row['End Date']) < date_threshold)
+            )
+            pos_rows = pos_rows[~close_condition]
+
+        pos_rows = df[~(df['Time Spent (Hrs)'] <= 0.008)]
+
+        return pos_rows
+   
+    print("cleaning...")
+
     df_raw.drop('User ID', axis=1, inplace=True)
     df_raw.drop('Task ID', axis=1, inplace=True)
     df_raw.drop('Comment', axis=1, inplace=True)
@@ -31,8 +53,16 @@ def basic_clean(df_raw):
     cleaner.convert_df_times(time_column='End Time', single_col=True)
 
     cleaner.replace_comma_to_dot(column='Time Spent (Hrs)')
-    
-    return cleaner.dataframe
+
+    df_clean = cleaner.dataframe
+
+    df_clean2 = delete_negative_times(df_clean)
+
+    ini_neg = len(df_clean[df_clean['Time Spent (Hrs)'] < 0])
+    post_neg = len(df_clean2[df_clean2['Time Spent (Hrs)'] < 0])
+    print(f"Deleted {post_neg-ini_neg} negative values, converted removed {len(df_clean2)-len(df_clean)} total rows")
+
+    return df_clean2
 
 def generate_subject_hours_dataframe(df_clean):
     ''' '''
