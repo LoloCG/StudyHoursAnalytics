@@ -31,10 +31,15 @@ def add_weekly_hours(df):
     with tm:
         tm.create_and_append_to_table(df, table_name=weekly_hours_table_name)
 
-def get_daily_hours_periods(periods):
+def get_df_periods(periods, data_series):
     '''
-        Requires a list of Periods as string, located in the column Period of the dataframe.
+        Parameters:
+            periods (list): list of the Periods as string as located in the column Period of the dataframe.
+            data_series (str): 'weekly' or 'daily', to select one of the two tables from where to extract.
     '''
+    if data_series == 'weekly': table_name = weekly_hours_table_name
+    elif data_series =='daily': table_name = daily_hours_table_name
+
     db = DBManager(db_name=db_name, db_path=db_path)
     connector = db.connector
     
@@ -42,7 +47,7 @@ def get_daily_hours_periods(periods):
 
     df = retrieve_as_df(
         connector_obj=connector, 
-        table_name=daily_hours_table_name, 
+        table_name=table_name, 
         conditions=conditions)
 
     return df
