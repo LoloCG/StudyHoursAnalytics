@@ -48,14 +48,14 @@ def plot_daily_subj_hours_line(df, avg_wind=None):
 
     df = df[['Period', 'Day', 'Time Spent (Hrs)']]
     
-    plt.style.use('dark_background')
+    plt.style.use('bmh')
     from matplotlib.ticker import MaxNLocator
     fig, ax = plt.subplots(figsize=(9, 5))
     
     
     for period in df['Period'].unique():
         period_data = df[df['Period'] == period]
-        ax.plot(period_data['Day'], period_data['Time Spent (Hrs)'], label=f'{period}', alpha=0.75, ls='--')
+        ax.plot(period_data['Day'], period_data['Time Spent (Hrs)'], label=f'{period}', alpha=0.75, ls='--', linewidth=1)
         
     ax.set_xlim(left=0)
     ax.set_ylim(bottom=0)
