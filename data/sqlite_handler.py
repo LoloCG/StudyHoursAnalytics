@@ -1,13 +1,13 @@
 from SQLite_ORM.basics import *
-from SQLite_ORM.pandas_addon import insert_data_from_df
-
+from SQLite_ORM.pandas_addon import *
+import pandas as pd
 import sys,os
 
 db_name = 'studyanalytics.db'
 db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 main_table_name = 'main_data'
-subject_hours_table_name = 'subject_hours'
+daily_hours_table_name = 'daily_hours'
 weekly_hours_table_name = 'weekly_hours'
 
 def check_table(table_name=main_table_name):
@@ -24,12 +24,28 @@ def add_main_data(df):
 def add_subject_hours(df):
     tm = TableManager()
     with tm:
-        tm.create_and_append_to_table(df, table_name=subject_hours_table_name)
+        tm.create_and_append_to_table(df, table_name=daily_hours_table_name)
 
 def add_weekly_hours(df):
     tm = TableManager()
     with tm:
         tm.create_and_append_to_table(df, table_name=weekly_hours_table_name)
+
+def get_daily_hours_periods(periods):
+    '''
+        Requires a list of Periods as string, located in the column Period of the dataframe.
+    '''
+    db = DBManager(db_name=db_name, db_path=db_path)
+    connector = db.connector
+    
+    conditions = {'Period': periods}
+
+    df = retrieve_as_df(
+        connector_obj=connector, 
+        table_name=daily_hours_table_name, 
+        conditions=conditions)
+
+    return df
 
 class TableManager:
     def __init__(self):
