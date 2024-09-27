@@ -19,6 +19,6 @@ def main():
         data.add_weekly_hours(weekly_df)
     
         df_pivot = dan.pivoter(weekly_df)
-        # dan.plot_week_hours_barchart(df_pivot)
+        dan.plot_week_hours_barchart(df_pivot)
 
 main()

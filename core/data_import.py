@@ -21,7 +21,7 @@ def basic_clean(df_raw):
         neg_rows = df[negval_condition]
 
         date_threshold = pd.Timedelta(days=2) # threshold
-        time_threshold = 0.25
+        time_threshold = 0.5
 
         for _, neg_row in neg_rows.iterrows():
             close_condition = (
@@ -30,7 +30,7 @@ def basic_clean(df_raw):
             )
             pos_rows = pos_rows[~close_condition]
 
-        pos_rows = df[~(df['Time Spent (Hrs)'] <= 0.008)]
+        pos_rows = pos_rows[~(pos_rows['Time Spent (Hrs)'] <= 0.008)]
 
         return pos_rows
    
