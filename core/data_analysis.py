@@ -7,11 +7,18 @@ def pivoter(df):
     
     return df_pivot
 
-def plot_daily_subj_hours_line(df, avg_wind=None):
+def plot_daily_subj_hours_line(df, add_avg=False):
+    import matplotlib.patheffects as PathEffects
     '''
         Plots a line chart showing the time spent on different subjects over a period of time.
     '''
     df = df[['Period', 'Day', 'Time Spent (Hrs)']]
+    
+    if add_avg:
+        df_avg = df.groupby('Day', as_index=False)['Time Spent (Hrs)'].mean()
+        df_avg['Period'] = 'Average'
+        df = pd.concat([df, df_avg[['Period', 'Day', 'Time Spent (Hrs)']]],axis=0, ignore_index=True)
+
     
     plt.style.use('bmh')
     from matplotlib.ticker import MaxNLocator
