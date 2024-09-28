@@ -64,19 +64,59 @@ def basic_clean(df_raw):
 
     return df_clean2
 
-def generate_subject_hours_dataframe(df_clean):
+def basic_to_daily_clean(df_clean):
     ''' '''
-    wanted_cols = ['Period', 'Subject', 'Time Spent (Hrs)', 'Start Date', 'Start Time']
+    def fill_missing_days(df, period):
+        '''
+            Used along the iteration. It selects the period values from the dataframe, 
+                obtains the range of days from start to finish, merges it with the period df, 
+                and fills the missing values (time spent = 0, periods with those that belong to it).
+        '''
+        df_period = df[df['Period'] == period]
+        
+        period_min = pd.Timestamp(df_period['Start Date'].min())
+        period_max = pd.Timestamp(df_period['Start Date'].max())
+
+        full_range = pd.DataFrame({'Start Date': pd.date_range(start=period_min, end=period_max)})
+
+        df_period = df[df['Period'] == period].copy()
+        df_period['Start Date'] = pd.to_datetime(df_period['Start Date'])
+        full_range['Start Date'] = pd.to_datetime(full_range['Start Date'])
+        
+        df_merged = pd.merge(full_range, df_period, on='Start Date', how='left')
+
+        df_merged['Time Spent (Hrs)'] = df_merged['Time Spent (Hrs)'].fillna(0)
+        df_merged['Period'] = df_merged['Period'].ffill()
+
+        df_merged['Day'] = df_merged['Start Date'].apply(lambda x: (pd.Timestamp(x) - period_min).days)
+        
+        return df_merged
+
+    # get only wanted columns
+    wanted_cols = ['Period', 'Subject', 'Time Spent (Hrs)', 'Start Date']
     df = df_clean[wanted_cols]
 
+    # Only school semesters
     filter_values = ['1St Semester', '2Nd Semester']
     filter_col = 'Period'
+    df = df[df[filter_col].isin(filter_values)]
     
-    # df['Week'] = df['Start Date'].dt.to_period('W-SUN')
+    # Group making a sum of the time spend daily, per subject and per period
+    df = df.groupby(['Period','Subject','Start Date'], as_index=False).sum()
 
-    subhr_df = df[df[filter_col].isin(filter_values)]
+    # Iterates for each period, and fills the missing days with 0 Time Spent
+    df_list = []
+    for period in df['Period'].unique():
+        df_filled = fill_missing_days(df=df, period=period)
+        df_list.append(df_filled)
+
+    # Concatenates the list of df made by the iteration
+    df = pd.concat(df_list, ignore_index=True)
     
-    return subhr_df
+    # changes the date into the chosen format
+    df['Date'] = df['Start Date'].dt.strftime('%d/%m/%Y')
+    df = df.drop(columns=['Start Date'])
+    return df
 
 def generate_weekly_hours_dataframe(df_clean):
     ''' '''
