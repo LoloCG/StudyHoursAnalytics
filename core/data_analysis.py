@@ -9,6 +9,7 @@ def pivoter(df):
 
 def plot_daily_subj_hours_line(df, add_avg=False):
     import matplotlib.patheffects as PathEffects
+    from matplotlib.ticker import MaxNLocator
     '''
         Plots a line chart showing the time spent on different subjects over a period of time.
     '''
@@ -19,16 +20,39 @@ def plot_daily_subj_hours_line(df, add_avg=False):
         df_avg['Period'] = 'Average'
         df = pd.concat([df, df_avg[['Period', 'Day', 'Time Spent (Hrs)']]],axis=0, ignore_index=True)
 
+    # print(df['Period'].unique())
     
     plt.style.use('bmh')
-    from matplotlib.ticker import MaxNLocator
+    
     fig, ax = plt.subplots(figsize=(9, 5))
     
+    line_params = {
+        'alpha':        0.5, 
+        'ls':           ':', 
+        'linewidth':    1,
+        'zorder':       1
+    }  
+    avg_line_params = {
+        'alpha':        0.75, 
+        'ls':           '-', 
+        'linewidth':    2,
+        'color':        'black',
+        'zorder':       3,
+    }
     
     for period in df['Period'].unique():
         period_data = df[df['Period'] == period]
-        ax.plot(period_data['Day'], period_data['Time Spent (Hrs)'], label=f'{period}', alpha=0.75, ls='--', linewidth=1)
         
+        if period == 'Average': 
+            ax.plot(period_data['Day'], period_data['Time Spent (Hrs)'], 
+                label=f'{period}', **avg_line_params,
+                path_effects=[PathEffects.SimpleLineShadow(), PathEffects.Normal()])
+            continue
+        ax.plot(period_data['Day'], period_data['Time Spent (Hrs)'], label=f'{period}', **line_params)
+    
+    # Example path effects:
+        # path_effects=[PathEffects.SimpleLineShadow(), PathEffects.Normal()]
+
     ax.set_xlim(left=0)
     ax.set_ylim(bottom=0)
     ax.xaxis.set_major_locator(MaxNLocator(nbins=10)) 
