@@ -173,6 +173,9 @@ def basic_to_daily_clean(df_clean):
     # changes the date into the chosen format
     df['Date'] = df['Start Date'].dt.strftime('%d/%m/%Y')
     df = df.drop(columns=['Start Date'])
+
+    df['Course'] = df['Course'].ffill()
+    
     return df
 
 def generate_weekly_hours_dataframe(df_clean):

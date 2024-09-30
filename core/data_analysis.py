@@ -14,29 +14,36 @@ def plot_daily_subj_hours_line(df, add_avg=False, roll_avg=None):
     '''
         Plots a line chart showing the time spent on different subjects over a period of time.
     '''
-    df = df[['Period', 'Day', 'Time Spent (Hrs)']]
+    df = df[['Course','Period', 'Day', 'Time Spent (Hrs)']]
     
     if add_avg:
         df_avg = df.groupby('Day', as_index=False)['Time Spent (Hrs)'].mean()
+        df_avg['Course'] = 'Average'
         df_avg['Period'] = 'Average'
-        df = pd.concat([df, df_avg[['Period', 'Day', 'Time Spent (Hrs)']]], axis=0, ignore_index=True)
+        df = pd.concat([df, df_avg[['Course', 'Period', 'Day', 'Time Spent (Hrs)']]], axis=0, ignore_index=True)
     
+    period_list = [] 
+    for course in df['Course'].unique():
+        course_data = df[(df['Course'] == course)]
+        for period in course_data['Period'].unique():
+            unique_period = str(course + ';' + period)
+            period_list.append(unique_period)
+
     if roll_avg is not None:
         df_avg_list = []
-        for period in df['Period'].unique():        
-            df_period = df[df['Period'] == period].sort_values('Day')
-
-            df_period['Rolled Time Spent (Hrs)'] = df_period['Time Spent (Hrs)'].rolling(window=roll_avg, min_periods=1).mean()
-
-            df_avg_list.append(df_period)
-
+        for unique_period in period_list:
+            course, period = unique_period.split(';')
+            period_data = df[(df['Course'] == course) & (df['Period'] == period)].sort_values('Day')
+            period_data['Rolled Time Spent (Hrs)'] = period_data['Time Spent (Hrs)'].rolling(window=roll_avg, min_periods=1).mean()
+            df_avg_list.append(period_data)
+                
         df = pd.concat(df_avg_list, ignore_index=True)
 
     plt.style.use('bmh')
-    
-    fig, ax = plt.subplots(figsize=(9, 5))
-    
-    cmap = cm.get_cmap('prism', len(df['Period'].unique()))  # Dark2 Set1  inferno
+
+    fig, ax = plt.subplots(figsize=(11, 6))
+
+    cmap = cm.get_cmap('Set1', len(period_list)) # Dark2, Set1, inferno, prism
     # color_cycle = cycler(color=['#4F81BD', '#C0504D', '#9BBB59', '#8064A2'])  
 
     fig.set_facecolor('#444444') 
@@ -61,26 +68,28 @@ def plot_daily_subj_hours_line(df, add_avg=False, roll_avg=None):
     else: plot_data = 'Time Spent (Hrs)'
 
     n = 0
-    for period in df['Period'].unique():
-        period_data = df[df['Period'] == period]
+    for unique_period in period_list:
+        course, period = unique_period.split(';')
+        period_data = df[(df['Course'] == course) & (df['Period'] == period)].sort_values('Day')
         
+        # print(f"Period data:\n{period_data}")
+
         if period == 'Average': 
             ax.plot(period_data['Day'], period_data[plot_data], 
                 label=f'{period}', **avg_line_params,
                 path_effects=path_efx_avg)
             continue
-        ax.plot(period_data['Day'], period_data[plot_data], label=f'{period}', color=cmap(n), **line_params)
+
+        ax.plot(period_data['Day'], period_data[plot_data], label=f'{course} - {period}', color=cmap(n), **line_params)
         n += 1
 
     ax.set_xlim(left=0)
     ax.set_ylim(bottom=0)
     ax.xaxis.set_major_locator(MaxNLocator(nbins=10)) 
     ax.tick_params(colors='0.8')
+    ax.set_xlabel('Day', color='0.8')  # Label for the X axis (Day)
+    ax.set_ylabel('Time Spent (Hours)', color='0.8')  
 
-    ax.xaxis.label.set_color('white')
-    ax.yaxis.label.set_color('white')
-
-    # ax.set_autoscale_on(True)
     ax.set_facecolor('#444444')
     
     plt.xticks(rotation=45)
