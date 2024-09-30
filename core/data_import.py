@@ -78,6 +78,8 @@ def edit_course_params(file, df):
     course_name = input("Course name: ")
     df['Course'] = course_name
     
+
+    
     while True:
         periods = df['Period'].unique()
         print(f"Edit periods in the course?:")
@@ -99,6 +101,7 @@ def edit_course_params(file, df):
             df.loc[df['Period'] == periods[choice-1], 'Period'] = new_period_name
             print(f"Period '{periods[choice-1]}' has been renamed to '{new_period_name}'.")
             period_name = new_period_name
+            
         else: 
             period_name = periods[choice-1]
     
@@ -113,16 +116,16 @@ def edit_course_params(file, df):
 
             new_row = {
                 'Period':           period_name, 
-                'Start Date':       new_start_date,
+                'Start Date':       (new_start_date), # the format that is required is 2023-07-18
                 'Start Time':       '00:00',
                 'Time Spent (Hrs)': 0,
                 'End Date':	        new_start_date,
                 'End Time':         '00:00',
             } 
-            
+            print(f"New row = {new_row}")
             df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
             print(f"Start date for period '{period_name}' updated to {new_start_date.strftime('%a, %d %b %Y')}.")
-
+        df['Course'] = df['Course'].ffill()
 
 def basic_to_daily_clean(df_clean):
     ''' '''
@@ -133,10 +136,10 @@ def basic_to_daily_clean(df_clean):
                 and fills the missing values (time spent = 0, periods with those that belong to it).
         '''
         df_period = df[df['Period'] == period]
-        
+
         period_min = pd.Timestamp(df_period['Start Date'].min())
         period_max = pd.Timestamp(df_period['Start Date'].max())
-
+        
         full_range = pd.DataFrame({'Start Date': pd.date_range(start=period_min, end=period_max)})
 
         df_period = df[df['Period'] == period].copy()
@@ -147,23 +150,17 @@ def basic_to_daily_clean(df_clean):
 
         df_merged['Time Spent (Hrs)'] = df_merged['Time Spent (Hrs)'].fillna(0)
         df_merged['Period'] = df_merged['Period'].ffill()
-        df_merged['Course'] = df_merged['Course'].ffill()
 
         df_merged['Day'] = df_merged['Start Date'].apply(lambda x: (pd.Timestamp(x) - period_min).days)
         
         return df_merged
 
-    # get only wanted columns
     wanted_cols = ['Course', 'Period', 'Subject', 'Time Spent (Hrs)', 'Start Date']
     df = df_clean[wanted_cols]
 
-    # Only school semesters
-    # # filter_values = ['1St Semester', '2Nd Semester']
-    # filter_col = 'Period'
-    # df = df[df[filter_col].isin(filter_values)]
-    
-    # Group making a sum of the time spend daily, per subject and per period
-    df = df.groupby(['Period','Subject','Start Date'], as_index=False).sum()
+    df.loc[:, 'Start Date'] = pd.to_datetime(df['Start Date'], errors='coerce').dt.date
+
+    df = df.groupby(['Course','Period','Subject', 'Start Date'], as_index=False,dropna=False).sum()
 
     df_list = []
     for period in df['Period'].unique():
