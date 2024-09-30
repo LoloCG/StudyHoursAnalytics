@@ -1,36 +1,57 @@
 import core.data_import as dimp
 import data.sqlite_handler as data
 import core.data_analysis as dan
+import CLI_native_tools as clin
 
 def main():
     exists, has_rows = data.check_table()
 
     if not has_rows:
-        file_choice = dimp.show_and_select_csv()
-        print(file_choice)
-
-        raw_df = dimp.csv_file_to_df(file_choice)
-
-        df_clean = dimp.basic_cleaning(raw_df)
-        df_edit = dimp.edit_course_params(df=df_clean, file=file_choice)
-        data.add_main_data(df_edit)
-
-        df_daily = dimp.basic_to_daily_clean(df_edit)
-        data.add_subject_hours(df_daily)
-        # dan.plot_daily_subj_hours_line(df_daily, add_avg=True, roll_avg=7)
-
-        weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
-        data.add_weekly_hours(weekly_df)
+        import_csv_to_database()
     
-    # else:
-    #     periods = ['1St Semester', '2Nd Semester']
-    #     df_daily = data.get_df_periods(periods, data_series='daily')
-    #     dan.plot_daily_subj_hours_line(df_daily, add_avg=True, roll_avg=7)
- 
-# df_pivot = dan.pivoter(weekly_df)
-# dan.plot_daily_subj_hours_line(subhr_df)
+    while True:
+        choice = main_menu_loop()
+        if choice is None: break
 
+
+# df_pivot = dan.pivoter(weekly_df)
 # dan.plot_week_hours_barchart(df_pivot)
 
+def main_menu_loop():
+    option_str_list = [
+        'Import new .CSV file',
+        'Display daily study Hours',
+        'Display Weekly Study Hours'
+    ]
+    choice = clin.ask_loop_show_and_select_options(option_str_list=option_str_list, exit_msg='Exit program.')
+    if choice is None: return None
+    options_funcs = [
+        lambda: import_csv_to_database(),
+        lambda: plot_daily_hours(),
+        ]
+    clin.call_function_from_choice(user_choice=choice, options_funcs=options_funcs)
+
+def plot_daily_hours():
+    df_daily = data.get_df_periods(data_series='daily')
+    dan.plot_daily_subj_hours_line(df_daily, add_avg=True, roll_avg=7)
+
+def import_csv_to_database():
+    print("Database does not contain any data.\nSelect file to import.")
+    file_choice = dimp.show_and_select_csv()
+    print(file_choice)
+
+    raw_df = dimp.csv_file_to_df(file_choice)
+
+    df_clean = dimp.basic_cleaning(raw_df)
+    df_edit = dimp.edit_course_params(df=df_clean, file=file_choice)
+    data.add_main_data(df_edit)
+
+    df_daily = dimp.basic_to_daily_clean(df_edit)
+    data.add_subject_hours(df_daily)
+
+    weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
+    data.add_weekly_hours(weekly_df)
+    return 
+    
 print("Program start.")
 main()

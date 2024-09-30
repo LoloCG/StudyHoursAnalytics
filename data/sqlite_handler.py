@@ -31,7 +31,7 @@ def add_weekly_hours(df):
     with tm:
         tm.create_and_append_to_table(df, table_name=weekly_hours_table_name)
 
-def get_df_periods(periods, data_series):
+def get_df_periods(data_series, periods=None, courses=None):
     '''
         Parameters:
             periods (list): list of the Periods as string as located in the column Period of the dataframe.
@@ -43,8 +43,10 @@ def get_df_periods(periods, data_series):
     db = DBManager(db_name=db_name, db_path=db_path)
     connector = db.connector
     
-    conditions = {'Period': periods}
-
+    if periods is not None: 
+        conditions = {'Period': periods}
+    else: conditions = ''
+    
     df = retrieve_as_df(
         connector_obj=connector, 
         table_name=table_name, 
