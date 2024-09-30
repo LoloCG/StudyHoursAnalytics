@@ -11,15 +11,17 @@ def main():
 
         raw_df = dimp.csv_file_to_df(file_choice)
 
-        df_clean = dimp.basic_clean(raw_df)
+        df_clean = dimp.basic_cleaning(raw_df)
+        df_clean = dimp.edit_course_params(df=df_clean, file=file_choice)
+        print(df_clean)
         data.add_main_data(df_clean)
 
         df_daily = dimp.basic_to_daily_clean(df_clean)
         data.add_subject_hours(df_daily)
-        dan.plot_daily_subj_hours_line(df_daily, add_avg=True)
+        # dan.plot_daily_subj_hours_line(df_daily, add_avg=True, roll_avg=7)
 
-        # weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
-        # data.add_weekly_hours(weekly_df)
+        weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
+        data.add_weekly_hours(weekly_df)
     
     # else:
     #     periods = ['1St Semester', '2Nd Semester']

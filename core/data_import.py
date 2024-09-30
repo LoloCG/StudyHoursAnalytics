@@ -9,7 +9,7 @@ def show_and_select_csv():
     files = []
     for item in input_folder_path.iterdir():
         files.append(item.name)
-    choice = clin.show_and_select_options(files)
+    choice = clin.show_and_select_options(str_list=files)
     
     return files[choice-1]
 
@@ -18,17 +18,13 @@ def csv_file_to_df(chosen_file):
     input_csv.add_extraction_folder(input_folder_path) 
     input_csv.add_file(chosen_file) 
     df = input_csv.csv_to_dataframe()
-    # TODO:  
-        # detect starting year and ending year
-        # add it to column concatenated as e.g.: "24-25"
-        # ask to select the initial date and show what it is at that moment
-        # input the intial date to create an empty day
-    # print("")
+    
     return df
 
-def basic_clean(df_raw):
+def basic_cleaning(df_raw):
     def delete_negative_times(df):
         import numpy as np
+        print("Removing negative times, lower than 30s, and other...")
         negval_condition = (df['Time Spent (Hrs)'] < 0) & (df['Type'] == 'Adjusted')
         pos_rows = df[~negval_condition]
         neg_rows = df[negval_condition]
@@ -47,7 +43,7 @@ def basic_clean(df_raw):
 
         return pos_rows
    
-    print("cleaning...")
+    print("Basic Cleaning...")
 
     df_raw.drop('User ID', axis=1, inplace=True)
     df_raw.drop('Task ID', axis=1, inplace=True)
@@ -77,6 +73,57 @@ def basic_clean(df_raw):
 
     return df_clean2
 
+def edit_course_params(file, df):
+    print(f"Select course name for {file}.")
+    course_name = input("Course name: ")
+    df['Course'] = course_name
+    
+    while True:
+        periods = df['Period'].unique()
+        print(f"Edit periods in the course?:")
+        choice = clin.ask_loop_show_and_select_options(periods, exit_msg='Continue.')
+        if choice == None: 
+            print("Continuing...")
+            return df
+        
+        keep_period = input(f"Do you want to keep the period '{periods[choice-1]}'? (Y/N): ").lower()
+
+        if keep_period == "n":
+            df = df[df['Period'] != periods[choice-1]]
+            print(f"Period '{periods[choice-1]}' removed from dataset.")
+            continue
+        
+        name_change_ask = input(f"Do you want to re-name the period '{periods[choice-1]}'? (Y/N): ").lower()
+        if name_change_ask == "y":
+            new_period_name = input(f"New name: ")
+            df.loc[df['Period'] == periods[choice-1], 'Period'] = new_period_name
+            print(f"Period '{periods[choice-1]}' has been renamed to '{new_period_name}'.")
+            period_name = new_period_name
+        else: 
+            period_name = periods[choice-1]
+    
+        earliest_date = df.loc[df['Period'] == period_name, 'Start Date'].min().strftime('%a, %d %b %Y') #.strftime('%d-%m-%Y')
+        print(f"Start date of {period_name} = {earliest_date}")
+        
+        adjust_date = input(f"Do you want to adjust the start date? (Y/N): ").lower()
+        
+        if adjust_date == "y":
+            new_start_date_str = input("Enter the new start date (DD-MM-YY): ")
+            new_start_date = pd.to_datetime(new_start_date_str, dayfirst=True).date()
+
+            new_row = {
+                'Period':           period_name, 
+                'Start Date':       new_start_date,
+                'Start Time':       '00:00',
+                'Time Spent (Hrs)': 0,
+                'End Date':	        new_start_date,
+                'End Time':         '00:00',
+            } 
+            
+            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+            print(f"Start date for period '{period_name}' updated to {new_start_date.strftime('%a, %d %b %Y')}.")
+
+
 def basic_to_daily_clean(df_clean):
     ''' '''
     def fill_missing_days(df, period):
@@ -100,24 +147,24 @@ def basic_to_daily_clean(df_clean):
 
         df_merged['Time Spent (Hrs)'] = df_merged['Time Spent (Hrs)'].fillna(0)
         df_merged['Period'] = df_merged['Period'].ffill()
+        df_merged['Course'] = df_merged['Course'].ffill()
 
         df_merged['Day'] = df_merged['Start Date'].apply(lambda x: (pd.Timestamp(x) - period_min).days)
         
         return df_merged
 
     # get only wanted columns
-    wanted_cols = ['Period', 'Subject', 'Time Spent (Hrs)', 'Start Date']
+    wanted_cols = ['Course', 'Period', 'Subject', 'Time Spent (Hrs)', 'Start Date']
     df = df_clean[wanted_cols]
 
     # Only school semesters
-    filter_values = ['1St Semester', '2Nd Semester']
-    filter_col = 'Period'
-    df = df[df[filter_col].isin(filter_values)]
+    # # filter_values = ['1St Semester', '2Nd Semester']
+    # filter_col = 'Period'
+    # df = df[df[filter_col].isin(filter_values)]
     
     # Group making a sum of the time spend daily, per subject and per period
     df = df.groupby(['Period','Subject','Start Date'], as_index=False).sum()
 
-    # Iterates for each period, and fills the missing days with 0 Time Spent
     df_list = []
     for period in df['Period'].unique():
         df_filled = fill_missing_days(df=df, period=period)
