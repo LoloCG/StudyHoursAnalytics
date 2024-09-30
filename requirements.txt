@@ -3,3 +3,4 @@ numpy
 matplotlib
 SQLite_ORM[pandas_addon] @ git+https://github.com/LoloCG/Lolos_Packages.git#subdirectory=Databases/SQLite_ORM
 git+https://github.com/LoloCG/Lolos_Packages.git#subdirectory=Data_Analysis
+git+https://github.com/LoloCG/Lolos_Packages.git#subdirectory=UIs/CLI_native_tools
