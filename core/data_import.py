@@ -2,18 +2,28 @@ import Excel_Tools.import_export_utils as imex
 import Data_Cleaning.data_cleaning_utils as dclean
 import pandas as pd
 from pathlib import Path
-
+import CLI_native_tools as clin
 input_folder_path = Path(r'C:\Users\Lolo\Desktop\Programming\GITRepo\StudyHoursAnalytics\data_example') 
 
-def all_input_csv():
+def show_and_select_csv():
+    files = []
     for item in input_folder_path.iterdir():
-        print(item)
+        files.append(item.name)
+    choice = clin.show_and_select_options(files)
+    
+    return files[choice-1]
 
-def get_csv_file(chosen_file='3º FarmNutr TDL_Log.csv'):
-    input_csv = imex.ExcelImporter()
-    input_csv.add_extraction_folder(input_folder_path)
-    input_csv.add_file(chosen_file)
+def csv_file_to_df(chosen_file):
+    input_csv = imex.ExcelImporter() 
+    input_csv.add_extraction_folder(input_folder_path) 
+    input_csv.add_file(chosen_file) 
     df = input_csv.csv_to_dataframe()
+    # TODO:  
+        # detect starting year and ending year
+        # add it to column concatenated as e.g.: "24-25"
+        # ask to select the initial date and show what it is at that moment
+        # input the intial date to create an empty day
+    # print("")
     return df
 
 def basic_clean(df_raw):
@@ -28,7 +38,7 @@ def basic_clean(df_raw):
 
         for _, neg_row in neg_rows.iterrows():
             close_condition = (
-                (abs(pos_rows['Time Spent (Hrs)'] + neg_row['Time Spent (Hrs)']) < time_threshold) & # 6 + (-5.8) = 0.2
+                (abs(pos_rows['Time Spent (Hrs)'] + neg_row['Time Spent (Hrs)']) < time_threshold) & 
                 (abs(pos_rows['End Date'] - neg_row['End Date']) < date_threshold)
             )
             pos_rows = pos_rows[~close_condition]
