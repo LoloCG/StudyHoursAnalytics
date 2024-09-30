@@ -1,14 +1,17 @@
-import sys, os
 import Excel_Tools.import_export_utils as imex 
 import Data_Cleaning.data_cleaning_utils as dclean
 import pandas as pd
+from pathlib import Path
 
-def get_csv_file():
-    chosen_file = '3º FarmNutr TDL_Log.csv'
-    target_folder = r'C:\Users\Lolo\Desktop\Programming\GITRepo\StudyHoursAnalytics\data_example'
+input_folder_path = Path(r'C:\Users\Lolo\Desktop\Programming\GITRepo\StudyHoursAnalytics\data_example') 
 
+def all_input_csv():
+    for item in input_folder_path.iterdir():
+        print(item)
+
+def get_csv_file(chosen_file='3º FarmNutr TDL_Log.csv'):
     input_csv = imex.ExcelImporter()
-    input_csv.add_extraction_folder(target_folder)
+    input_csv.add_extraction_folder(input_folder_path)
     input_csv.add_file(chosen_file)
     df = input_csv.csv_to_dataframe()
     return df

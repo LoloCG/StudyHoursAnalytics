@@ -28,4 +28,5 @@ def main():
 
 # dan.plot_week_hours_barchart(df_pivot)
 
+print("Program start.")
 main()

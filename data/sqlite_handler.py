@@ -1,10 +1,10 @@
 from SQLite_ORM.basics import *
 from SQLite_ORM.pandas_addon import *
 import pandas as pd
-import sys,os
+from pathlib import Path
 
 db_name = 'studyanalytics.db'
-db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+db_path = Path(__file__).resolve().parent.parent
 
 main_table_name = 'main_data'
 daily_hours_table_name = 'daily_hours'
