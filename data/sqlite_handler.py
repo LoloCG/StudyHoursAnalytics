@@ -1,13 +1,13 @@
 from SQLite_ORM.basics import *
-from SQLite_ORM.pandas_addon import insert_data_from_df
-
-import sys,os
+from SQLite_ORM.pandas_addon import *
+import pandas as pd
+from pathlib import Path
 
 db_name = 'studyanalytics.db'
-db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+db_path = Path(__file__).resolve().parent.parent
 
 main_table_name = 'main_data'
-subject_hours_table_name = 'subject_hours'
+daily_hours_table_name = 'daily_hours'
 weekly_hours_table_name = 'weekly_hours'
 
 def check_table(table_name=main_table_name):
@@ -24,12 +24,35 @@ def add_main_data(df):
 def add_subject_hours(df):
     tm = TableManager()
     with tm:
-        tm.create_and_append_to_table(df, table_name=subject_hours_table_name)
+        tm.create_and_append_to_table(df, table_name=daily_hours_table_name)
 
 def add_weekly_hours(df):
     tm = TableManager()
     with tm:
         tm.create_and_append_to_table(df, table_name=weekly_hours_table_name)
+
+def get_df_periods(data_series, periods=None, courses=None):
+    '''
+        Parameters:
+            periods (list): list of the Periods as string as located in the column Period of the dataframe.
+            data_series (str): 'weekly' or 'daily', to select one of the two tables from where to extract.
+    '''
+    if data_series == 'weekly': table_name = weekly_hours_table_name
+    elif data_series =='daily': table_name = daily_hours_table_name
+
+    db = DBManager(db_name=db_name, db_path=db_path)
+    connector = db.connector
+    
+    if periods is not None: 
+        conditions = {'Period': periods}
+    else: conditions = ''
+    
+    df = retrieve_as_df(
+        connector_obj=connector, 
+        table_name=table_name, 
+        conditions=conditions)
+
+    return df
 
 class TableManager:
     def __init__(self):
