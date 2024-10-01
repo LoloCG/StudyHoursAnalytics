@@ -24,7 +24,7 @@ def select_current_year_file():
         
         new_data = {}
         new_data['Current year'] = {}
-        new_data['Current year']['current year path'] = str(csv_folder_path)
+        new_data['Current year']['folder path'] = str(csv_folder_path)
         
         json_upsert(config_file, new_data)
 
@@ -35,7 +35,7 @@ def select_current_year_file():
         with open(config_file, 'r') as file:
             config = json.load(file)
         
-        current_year_path = Path(config['Current year']['current year path'])
+        current_year_path = Path(config['Current year']['folder path'])
         
         files = []
         for file in current_year_path.iterdir():
@@ -48,10 +48,12 @@ def select_current_year_file():
             return None
 
         choice = clin.show_and_select_options(str_list=files)
-    
+
         new_data = {}
         new_data['Current year'] = {}
-        new_data['Current year']['csv file name'] = files[choice-1]
+        # this shouldnt be necesary... TODO: refactor upsert function
+        new_data['Current year']['folder path'] = config['Current year']['folder path'] 
+        new_data['Current year']['csv name'] = str(files[choice-1])
 
         csv_folder_path = json_upsert(config_file, new_data)
 
@@ -67,8 +69,8 @@ def select_current_year_file():
     with open(config_file, 'r') as file:
         config = json.load(file)
 
-    folder_path = ask_current_year_path() if 'current_year_path' not in config else config['current_year_path']
-    file_name = ask_current_year_csv() if 'current_year_csv' not in config else config['current_year_csv']
+    folder_path = ask_current_year_path() if 'folder path' not in config['Current year'] else config['Current year']['folder path']
+    file_name = ask_current_year_csv() if 'csv name' not in config['Current year'] else config['Current year']['csv name']
 
     return folder_path, file_name
     
@@ -141,6 +143,33 @@ def basic_cleaning(df_raw):
     return df_clean2
 
 def edit_course_params(df, file=None):
+    def update_df_with_json_config(df, config, file):
+        print(f"DEBUG: {file} found in config")
+                    
+        df['Course'] = config[file]["Course Name"]
+        df = df[df['Period'].isin(config[file]["Periods maintained"])]
+
+        for json_period in config[file]["Periods maintained"]:
+            period_name = config[file][json_period]["Period name"]
+            df.loc[df['Period'] == json_period, 'Period'] = period_name
+
+            new_start_date = pd.to_datetime(config[file][json_period]["Start date"]).date()
+            new_row = {
+                'Period':           period_name, 
+                'Start Date':       new_start_date,
+                'Start Time':       '00:00',
+                'Time Spent (Hrs)': 0,
+                'End Date':	        new_start_date,
+                'End Time':         '00:00',
+            } 
+
+            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        
+        df.loc[:, 'Course'] = df['Course'].ffill()
+
+        print(f"DEBUG: course parameters added from json correctly.")
+        return df
+
     if file is not None and config_file.exists():
         config = None
         print(f"DEBUG: trying to search {file} in JSON")
@@ -148,30 +177,7 @@ def edit_course_params(df, file=None):
             config = json.load(j_file)
 
         if file in config:
-            print(f"DEBUG: {file} found in config")
-                       
-            df['Course'] = config[file]["Course Name"]
-            df = df[df['Period'].isin(config[file]["Periods maintained"])]
-
-            for json_period in config[file]["Periods maintained"]:
-                period_name = config[file][json_period]["Period name"]
-                df.loc[df['Period'] == json_period, 'Period'] = period_name
-
-                new_start_date = pd.to_datetime(config[file][json_period]["Start date"]).date()
-                new_row = {
-                    'Period':           period_name, 
-                    'Start Date':       new_start_date,
-                    'Start Time':       '00:00',
-                    'Time Spent (Hrs)': 0,
-                    'End Date':	        new_start_date,
-                    'End Time':         '00:00',
-                } 
-
-                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-            
-            df['Course'] = df['Course'].ffill()
-
-            print(f"DEBUG: course parameters added from json correctly.")
+            df = update_df_with_json_config(df, config, file)
             return df
         else:  
             print(f"{file} not found in JSON")
@@ -251,7 +257,8 @@ def edit_course_params(df, file=None):
         else:
             json_config_params[file][periods[choice-1]]["Start date"] = earliest_date
         
-        df['Course'] = df['Course'].ffill()
+        df.loc[:, 'Course'] = df['Course'].ffill()
+
 
 def basic_to_daily_clean(df_clean):
     ''' '''

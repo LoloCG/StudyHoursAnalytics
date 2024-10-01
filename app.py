@@ -2,6 +2,7 @@ import core.data_import as dimp
 import data.sqlite_handler as data
 import core.data_analysis as dan
 import CLI_native_tools as clin
+import json
 
 def main():
     exists, has_rows = data.check_table()
@@ -32,10 +33,19 @@ def main_menu_loop():
         lambda: import_current_year_csv()
         ]
     clin.call_function_from_choice(user_choice=choice, options_funcs=options_funcs)
+    return True
 
 def plot_daily_hours():
     df_daily = data.get_df_periods(data_series='daily')
-    dan.plot_daily_subj_hours_line(df_daily, add_avg=True, roll_avg=7)
+    
+    config = None
+    with open('config.json', 'r') as file:
+        config = json.load(file)
+    
+    current_course_file = config['Current year']['csv name']
+    current_course = config[current_course_file]['Course Name']
+
+    dan.plot_daily_subj_hours_line(df_daily, current_course=current_course, add_avg=True, roll_avg=7)
     return
 
 def import_csv_to_database():
@@ -63,16 +73,26 @@ def import_current_year_csv():
     raw_df = dimp.csv_file_to_df(chosen_file=file_name, folder_path=folder_path)
 
     df_clean = dimp.basic_cleaning(raw_df)
-    df_edit = dimp.edit_course_params(df=df_clean)
+    df_edit = dimp.edit_course_params(df=df_clean, file=file_name)
     
-    data.add_main_data(df_edit)
-
+    tm = data.TableManager()
+    with tm:
+        unique_cols = ['Start Date', 'End Time']
+        tm.select_table(table_opt='main')
+        tm.insert_if_new(
+            df=df_edit, 
+            unique_cols=unique_cols)
+        
+    
     df_daily = dimp.basic_to_daily_clean(df_edit)
-    data.add_subject_hours(df_daily)
-
-    weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
-    data.add_weekly_hours(weekly_df)
+    with tm:
+        unique_cols = ['Date', 'Subject', 'Time Spent (Hrs)']
+        tm.select_table(table_opt='day')
+        tm.insert_if_new(df=df_daily, unique_cols=unique_cols)
+    
     return True
+    # weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
+    # data.add_weekly_hours(weekly_df)
 
 print("Program start.")
 main()

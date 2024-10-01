@@ -7,13 +7,15 @@ def pivoter(df):
     
     return df_pivot
 
-def plot_daily_subj_hours_line(df, add_avg=False, roll_avg=None):
+def plot_daily_subj_hours_line(df, current_course=None, add_avg=False, roll_avg=None):
     import matplotlib.patheffects as path_effects # prev PathEffects
     from matplotlib.ticker import MaxNLocator
     import matplotlib.cm as cm
     '''
         Plots a line chart showing the time spent on different subjects over a period of time.
     '''
+    df = df.sort_values(by='Date')
+
     df = df[['Course','Period', 'Day', 'Time Spent (Hrs)']]
     
     if add_avg:
@@ -47,7 +49,13 @@ def plot_daily_subj_hours_line(df, add_avg=False, roll_avg=None):
     # color_cycle = cycler(color=['#4F81BD', '#C0504D', '#9BBB59', '#8064A2'])  
 
     fig.set_facecolor('#444444') 
-
+    current_line_params = {
+        'alpha':        0.8, 
+        'ls':           '-', 
+        'linewidth':    1.7,
+        'color':        '0.9',
+        'zorder':       1,
+    }
     line_params = {
         'alpha':        0.7, 
         'ls':           ':', 
@@ -58,8 +66,8 @@ def plot_daily_subj_hours_line(df, add_avg=False, roll_avg=None):
         'alpha':        0.8, 
         'ls':           '-', 
         'linewidth':    2.25,
-        'color':        '0.85',
-        'zorder':       3,
+        'color':        '0.7',
+        'zorder':       2,
     }
     path_efx_avg = [path_effects.SimpleLineShadow(offset=(0.5, -1), shadow_color='white'), path_effects.Normal()]
     
@@ -71,12 +79,17 @@ def plot_daily_subj_hours_line(df, add_avg=False, roll_avg=None):
     for unique_period in period_list:
         course, period = unique_period.split(';')
         period_data = df[(df['Course'] == course) & (df['Period'] == period)].sort_values('Day')
-        
-        # print(f"Period data:\n{period_data}")
 
         if period == 'Average': 
             ax.plot(period_data['Day'], period_data[plot_data], 
                 label=f'{period}', **avg_line_params,
+                path_effects=path_efx_avg)
+            continue
+        
+        if course == current_course: # this will have to be modified for more than 1 semester... this is a quick fix...
+            ax.plot(period_data['Day'], period_data[plot_data], 
+                label=f'{course} - {period}',
+                **current_line_params,
                 path_effects=path_efx_avg)
             continue
 

@@ -18,8 +18,3 @@ def json_upsert(config_file, new_data):
 
     return config
 
-def json_course_config(course):
-    with open(config_file, 'r') as file:
-        config = json.load(file)
-
-    course_name = config[course]
