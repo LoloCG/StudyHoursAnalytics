@@ -7,27 +7,29 @@ def main():
     exists, has_rows = data.check_table()
 
     if not has_rows:
+        print("Database does not contain any data.\nSelect file to import.")
         import_csv_to_database()
     
     while True:
         choice = main_menu_loop()
         if choice is None: break
 
-
 # df_pivot = dan.pivoter(weekly_df)
 # dan.plot_week_hours_barchart(df_pivot)
 
 def main_menu_loop():
     option_str_list = [
-        'Import new .CSV file',
         'Display daily study Hours',
-        'Display Weekly Study Hours'
+        'Import .CSV file',
+        "Import current year's .CSV file",
+        # 'Display Weekly Study Hours'
     ]
     choice = clin.ask_loop_show_and_select_options(option_str_list=option_str_list, exit_msg='Exit program.')
     if choice is None: return None
     options_funcs = [
-        lambda: import_csv_to_database(),
         lambda: plot_daily_hours(),
+        lambda: import_csv_to_database(),
+        lambda: import_current_year_csv()
         ]
     clin.call_function_from_choice(user_choice=choice, options_funcs=options_funcs)
 
@@ -36,7 +38,6 @@ def plot_daily_hours():
     dan.plot_daily_subj_hours_line(df_daily, add_avg=True, roll_avg=7)
 
 def import_csv_to_database():
-    print("Database does not contain any data.\nSelect file to import.")
     file_choice = dimp.show_and_select_csv()
     print(file_choice)
 
@@ -52,6 +53,23 @@ def import_csv_to_database():
     weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
     data.add_weekly_hours(weekly_df)
     return 
+
+def import_current_year_csv():
+    folder_path, file_name = dimp.select_current_year_file()
+    print(f"Current year file:\n{folder_path}/{file_name}")
     
+    raw_df = dimp.csv_file_to_df(chosen_file=file_name, folder_path=folder_path)
+
+    df_clean = dimp.basic_cleaning(raw_df)
+    df_edit = dimp.edit_course_params(df=df_clean)
+    data.add_main_data(df_edit)
+
+    df_daily = dimp.basic_to_daily_clean(df_edit)
+    data.add_subject_hours(df_daily)
+
+    weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
+    data.add_weekly_hours(weekly_df)
+    return 
+
 print("Program start.")
 main()
