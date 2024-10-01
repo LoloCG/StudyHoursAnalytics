@@ -1,6 +1,5 @@
 from SQLite_ORM.basics import *
 from SQLite_ORM.pandas_addon import *
-import pandas as pd
 from pathlib import Path
 
 db_name = 'studyanalytics.db'

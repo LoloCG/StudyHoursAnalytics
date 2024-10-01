@@ -4,6 +4,49 @@ import pandas as pd
 from pathlib import Path
 import CLI_native_tools as clin
 input_folder_path = Path(r'C:\Users\Lolo\Desktop\Programming\GITRepo\StudyHoursAnalytics\data_example') 
+def select_current_year_file():
+    def ask_current_year_path():
+        print("Current year's .csv file not found.")
+        
+        csv_folder_path = ''
+        while True:
+            folder_dir = input("Enter the directory path to the file: ")
+            csv_folder_path = Path(folder_dir)
+            if csv_folder_path.exists() and csv_folder_path.is_dir():
+                break
+            print("Invalid directory. Please try again.")
+        
+
+        return str(csv_folder_path)
+        
+    def ask_current_year_csv():
+        config = None
+        with open(config_file, 'r') as file:
+            config = json.load(file)
+        
+        current_year_path = Path(config['Current year']['current year path'])
+        
+        files = []
+        for file in current_year_path.iterdir():
+            if file.suffix == '.csv':
+                files.append(file.name)
+            else: continue
+
+        if not files:
+            print("No CSV files found in the directory.")
+            return None
+
+        choice = clin.show_and_select_options(str_list=files)
+    
+        return files[choice-1]
+
+    if not config_file.exists(): 
+        folder_path = ask_current_year_path()
+        file_name = ask_current_year_csv()
+
+        return folder_path, file_name
+
+    return folder_path, file_name
 
 def show_and_select_csv():
     files = []
