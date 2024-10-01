@@ -49,15 +49,15 @@ def plot_daily_subj_hours_line(df, add_avg=False, roll_avg=None):
     fig.set_facecolor('#444444') 
 
     line_params = {
-        'alpha':        0.65, 
+        'alpha':        0.7, 
         'ls':           ':', 
-        'linewidth':    1,
+        'linewidth':    1.5,
         'zorder':       1
     }  
     avg_line_params = {
-        'alpha':        0.75, 
+        'alpha':        0.8, 
         'ls':           '-', 
-        'linewidth':    2,
+        'linewidth':    2.25,
         'color':        '0.85',
         'zorder':       3,
     }
