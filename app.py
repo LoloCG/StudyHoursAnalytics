@@ -36,6 +36,7 @@ def main_menu_loop():
 def plot_daily_hours():
     df_daily = data.get_df_periods(data_series='daily')
     dan.plot_daily_subj_hours_line(df_daily, add_avg=True, roll_avg=7)
+    return
 
 def import_csv_to_database():
     file_choice = dimp.show_and_select_csv()
@@ -45,6 +46,7 @@ def import_csv_to_database():
 
     df_clean = dimp.basic_cleaning(raw_df)
     df_edit = dimp.edit_course_params(df=df_clean, file=file_choice)
+    
     data.add_main_data(df_edit)
 
     df_daily = dimp.basic_to_daily_clean(df_edit)
@@ -52,7 +54,7 @@ def import_csv_to_database():
 
     weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
     data.add_weekly_hours(weekly_df)
-    return 
+    return True
 
 def import_current_year_csv():
     folder_path, file_name = dimp.select_current_year_file()
@@ -62,6 +64,7 @@ def import_current_year_csv():
 
     df_clean = dimp.basic_cleaning(raw_df)
     df_edit = dimp.edit_course_params(df=df_clean)
+    
     data.add_main_data(df_edit)
 
     df_daily = dimp.basic_to_daily_clean(df_edit)
@@ -69,7 +72,7 @@ def import_current_year_csv():
 
     weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
     data.add_weekly_hours(weekly_df)
-    return 
+    return True
 
 print("Program start.")
 main()

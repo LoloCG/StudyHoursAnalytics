@@ -7,7 +7,6 @@ import CLI_native_tools as clin # TODO disconnect CLI tools from data import
 import json
 from data.json_handler import json_upsert # absolute import example
 
-
 input_folder_path = Path(r'C:\Users\Lolo\Desktop\Programming\GITRepo\StudyHoursAnalytics\data_example') 
 config_file = Path('config.json')
 
@@ -141,7 +140,44 @@ def basic_cleaning(df_raw):
 
     return df_clean2
 
-def edit_course_params(df,file=None):
+def edit_course_params(df, file=None):
+    if file is not None and config_file.exists():
+        config = None
+        print(f"DEBUG: trying to search {file} in JSON")
+        with open(config_file, 'r') as j_file:
+            config = json.load(j_file)
+
+        if file in config:
+            print(f"DEBUG: {file} found in config")
+                       
+            df['Course'] = config[file]["Course Name"]
+            df = df[df['Period'].isin(config[file]["Periods maintained"])]
+
+            for json_period in config[file]["Periods maintained"]:
+                period_name = config[file][json_period]["Period name"]
+                df.loc[df['Period'] == json_period, 'Period'] = period_name
+
+                new_start_date = pd.to_datetime(config[file][json_period]["Start date"]).date()
+                new_row = {
+                    'Period':           period_name, 
+                    'Start Date':       new_start_date,
+                    'Start Time':       '00:00',
+                    'Time Spent (Hrs)': 0,
+                    'End Date':	        new_start_date,
+                    'End Time':         '00:00',
+                } 
+
+                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+            
+            df['Course'] = df['Course'].ffill()
+
+            print(f"DEBUG: course parameters added from json correctly.")
+            return df
+        else:  
+            print(f"{file} not found in JSON")
+    else: 
+        print(f"Json file does not exist")
+
     json_config_params = {}
     json_config_params[file] = {}
 
@@ -151,13 +187,14 @@ def edit_course_params(df,file=None):
     df['Course'] = course_name
 
     json_config_params[file]["Course Name"] = course_name
-
+    periods_maintained = []
     while True:
         periods = df['Period'].unique()
         print(f"Edit periods in the course?:")
         choice = clin.ask_loop_show_and_select_options(periods, exit_msg='Continue.')
         if choice == None: 
             print("Continuing...")
+            json_config_params[file]["Periods maintained"] = periods_maintained
             json_upsert(config_file, json_config_params)
             return df
         
@@ -166,9 +203,13 @@ def edit_course_params(df,file=None):
         if keep_period == "n":
             df = df[df['Period'] != periods[choice-1]]
             print(f"Period '{periods[choice-1]}' removed from dataset.")
+            try:
+                periods_maintained.remove(periods[choice-1])
+            except:
+                continue
             continue
-        
-        json_config_params[file]["Periods maintained"] = df['Period'].unique().tolist()
+        else:
+            periods_maintained.append(periods[choice-1])
 
         json_config_params[file][periods[choice-1]] = {}
 
@@ -201,7 +242,7 @@ def edit_course_params(df,file=None):
                 'End Date':	        new_start_date,
                 'End Time':         '00:00',
             } 
-            # print(f"New row = {new_row}")
+
             df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
             print(f"Start date for period '{period_name}' updated to {new_start_date.strftime('%a, %d %b %Y')}.")
 
