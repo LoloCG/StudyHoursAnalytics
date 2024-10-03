@@ -3,11 +3,14 @@ import data.sqlite_handler as data
 import core.data_analysis as dan
 import CLI_native_tools as clin
 import json
+from core.logger import setup_logger, set_logger_config, set_third_party_loggers_level
 
 def main():
     exists, has_rows = data.check_table()
+    logger.debug(f"exists={exists}, has_rows={has_rows==True}")
 
     if not has_rows:
+        logger.info(f"Database does not contain any data")
         print("Database does not contain any data.\nSelect file to import.")
         import_csv_to_database()
     
@@ -36,6 +39,7 @@ def main_menu_loop():
     return True
 
 def plot_daily_hours():
+    logger.info(f"Plotting daily hours graph")
     df_daily = data.get_df_periods(data_series='daily')
     
     config = None
@@ -44,7 +48,7 @@ def plot_daily_hours():
     
     current_course_file = config['Current year']['csv name']
     current_course = config[current_course_file]['Course Name']
-
+    logger.debug(f"Current course selected={str(current_course)}")
     dan.plot_daily_subj_hours_line(df_daily, current_course=current_course, add_avg=True, roll_avg=7)
     return
 
@@ -94,5 +98,8 @@ def import_current_year_csv():
     # weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
     # data.add_weekly_hours(weekly_df)
 
-print("Program start.")
+logger = setup_logger()
+set_logger_config(level='INFO')
+logger.info("Starting main sequence...")
+set_third_party_loggers_level()
 main()

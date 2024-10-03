@@ -6,7 +6,9 @@ from pathlib import Path
 import CLI_native_tools as clin # TODO disconnect CLI tools from data import
 import json
 from data.json_handler import json_upsert # absolute import example
+from .logger import setup_logger
 
+logger = setup_logger()
 input_folder_path = Path(r'C:\Users\Lolo\Desktop\Programming\GITRepo\StudyHoursAnalytics\data_example') 
 config_file = Path('config.json')
 
@@ -144,8 +146,8 @@ def basic_cleaning(df_raw):
 
 def edit_course_params(df, file=None):
     def update_df_with_json_config(df, config, file):
-        print(f"DEBUG: {file} found in config")
-                    
+        logger.debug(f"{file} found in config JSON") 
+        
         df['Course'] = config[file]["Course Name"]
         df = df[df['Period'].isin(config[file]["Periods maintained"])]
 
@@ -167,12 +169,12 @@ def edit_course_params(df, file=None):
         
         df.loc[:, 'Course'] = df['Course'].ffill()
 
-        print(f"DEBUG: course parameters added from json correctly.")
+        logger.debug(f"course parameters added from json correctly.")  
         return df
 
     if file is not None and config_file.exists():
         config = None
-        print(f"DEBUG: trying to search {file} in JSON")
+        logger.debug(f"trying to search {file} in JSON")
         with open(config_file, 'r') as j_file:
             config = json.load(j_file)
 
@@ -258,7 +260,6 @@ def edit_course_params(df, file=None):
             json_config_params[file][periods[choice-1]]["Start date"] = earliest_date
         
         df.loc[:, 'Course'] = df['Course'].ffill()
-
 
 def basic_to_daily_clean(df_clean):
     ''' '''
