@@ -1,5 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from .logger import setup_logger
+logger = setup_logger()
 
 def pivoter(df):
     df_pivot = df.pivot_table(index='Week', columns=['Period', 'Subject'], values='Time Spent (Hrs)', fill_value=0)

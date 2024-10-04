@@ -6,11 +6,15 @@ from pathlib import Path
 import CLI_native_tools as clin # TODO disconnect CLI tools from data import
 import json
 from data.json_handler import json_upsert # absolute import example
-from .logger import setup_logger
 
+from .logger import setup_logger
 logger = setup_logger()
+
 input_folder_path = Path(r'C:\Users\Lolo\Desktop\Programming\GITRepo\StudyHoursAnalytics\data_example') 
 config_file = Path('config.json')
+
+def check_json_at_start():
+    pass
 
 def select_current_year_file():
     def ask_current_year_path():

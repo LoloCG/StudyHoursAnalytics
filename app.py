@@ -81,18 +81,17 @@ def import_current_year_csv():
     
     tm = data.TableManager()
     with tm:
-        unique_cols = ['Start Date', 'End Time']
+        unique_cols = ['Start Date', 'Start Time', 'End Time']
         tm.select_table(table_opt='main')
-        tm.insert_if_new(
+        tm.upsert_to_table(
             df=df_edit, 
             unique_cols=unique_cols)
         
-    
     df_daily = dimp.basic_to_daily_clean(df_edit)
     with tm:
-        unique_cols = ['Date', 'Subject', 'Time Spent (Hrs)']
+        unique_cols = ['Course', 'Period', 'Subject', 'Day']
         tm.select_table(table_opt='day')
-        tm.insert_if_new(df=df_daily, unique_cols=unique_cols)
+        tm.upsert_to_table(df=df_daily, unique_cols=unique_cols)
     
     return True
     # weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
