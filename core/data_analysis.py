@@ -15,6 +15,7 @@ def plot_daily_subj_hours_line(df, current_course=None, add_avg=False, roll_avg=
         Plots a line chart showing the time spent on different subjects over a period of time.
     '''
     df = df.sort_values(by='Date')
+    logger.info(f"last day in plot: {df['Date'].max()} in {df.loc[df['Date'].idxmax(), 'Course']}")
 
     df = df[['Course','Period', 'Day', 'Time Spent (Hrs)']]
     

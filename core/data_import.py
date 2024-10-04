@@ -305,7 +305,7 @@ def basic_to_daily_clean(df_clean):
     df = pd.concat(df_list, ignore_index=True)
     
     # changes the date into the chosen format
-    df['Date'] = df['Start Date'].dt.strftime('%d/%m/%Y')
+    df['Date'] = pd.to_datetime(df['Start Date']).dt.date #.dt.strftime('%d/%m/%Y')
     df = df.drop(columns=['Start Date'])
 
     df['Course'] = df['Course'].ffill()

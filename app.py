@@ -72,8 +72,8 @@ def import_csv_to_database():
 
 def import_current_year_csv():
     folder_path, file_name = dimp.select_current_year_file()
-    print(f"Current year file:\n{folder_path}/{file_name}")
-    
+    logger.debug(f"Current year file:\n{folder_path}/{file_name}")
+
     raw_df = dimp.csv_file_to_df(chosen_file=file_name, folder_path=folder_path)
 
     df_clean = dimp.basic_cleaning(raw_df)
