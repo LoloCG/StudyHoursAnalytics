@@ -1,7 +1,8 @@
 from SQLite_ORM.basics import *
 from SQLite_ORM.pandas_addon import *
-import pandas as pd
 from pathlib import Path
+from core.logger import setup_logger
+logger = setup_logger()
 
 db_name = 'studyanalytics.db'
 db_path = Path(__file__).resolve().parent.parent
@@ -19,17 +20,17 @@ def check_table(table_name=main_table_name):
 def add_main_data(df):
     tm = TableManager()
     with tm:
-        tm.create_and_append_to_table(df, table_name=main_table_name)
+        tm.create_and_append_to_table(df, table=main_table_name)
 
 def add_subject_hours(df):
     tm = TableManager()
     with tm:
-        tm.create_and_append_to_table(df, table_name=daily_hours_table_name)
+        tm.create_and_append_to_table(df, table=daily_hours_table_name)
 
 def add_weekly_hours(df):
     tm = TableManager()
     with tm:
-        tm.create_and_append_to_table(df, table_name=weekly_hours_table_name)
+        tm.create_and_append_to_table(df, table=weekly_hours_table_name)
 
 def get_df_periods(data_series, periods=None, courses=None):
     '''
@@ -57,6 +58,7 @@ def get_df_periods(data_series, periods=None, courses=None):
 class TableManager:
     def __init__(self):
         self.db = DBManager(db_name=db_name, db_path=db_path)
+        self.selected_table = None
 
     def __enter__(self):
         self.db.connector.connect()
@@ -67,8 +69,39 @@ class TableManager:
         self.db.connector.close()
         self.connector_obj = None
 
-    def create_and_append_to_table(self, df, table_name):
+    def create_and_append_to_table(self, df, table=None):
+        if self.selected_table is None and table is not None:
+            table_name = table
+        else: 
+            table_name = self.selected_table
         insert_data_from_df(
             dataframe=df,
             connector_obj=self.connector_obj, 
             table_name=table_name)
+    
+    def select_table(self, table_opt='main'):
+        if table_opt =='main': table_name = main_table_name
+        elif table_opt == 'day': table_name = daily_hours_table_name
+        elif table_opt == 'week': table_name = weekly_hours_table_name
+        self.selected_table = table_name
+        return self
+
+    def upsert_to_table(self, df, unique_cols):
+        table = self.selected_table
+        logger.debug(f"upsert_with_df df into {table} by the columns {unique_cols}")
+        
+        upsert_with_df(
+            dataframe=df, 
+            connector_obj=self.connector_obj, 
+            table_name=table, 
+            unique_cols=unique_cols)
+
+    def insert_if_new(self, df, unique_cols):
+        table = self.selected_table
+        logger.debug(f"insert_newdata_from_df, df into {table} by the columns {unique_cols}")
+        insert_newdata_from_df(
+            dataframe=df, 
+            connector_obj=self.connector_obj, 
+            table_name=table, 
+            unique_cols=unique_cols)
+        logger.debug(f"Insertion to db ended")
