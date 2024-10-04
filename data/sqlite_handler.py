@@ -15,7 +15,8 @@ def check_table(table_name=main_table_name):
     db = DBManager(db_name=db_name, db_path=db_path)
     with db.connector:
         exists, has_rows = db.table_manager.check_table(main_table_name)
-    return exists, has_rows
+        has_rows = True if has_rows > 0 else False
+    return exists, has_rows 
 
 def add_main_data(df):
     tm = TableManager()

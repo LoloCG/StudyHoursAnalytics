@@ -77,10 +77,12 @@ def select_current_year_file():
 
     folder_path = ask_current_year_path() if 'folder path' not in config['Current year'] else config['Current year']['folder path']
     file_name = ask_current_year_csv() if 'csv name' not in config['Current year'] else config['Current year']['csv name']
+    logger.debug(f"Selected current year file path:\n{folder_path}/{file_name}")
 
     return folder_path, file_name
     
 def show_and_select_csv():
+    print("Database does not contain any data.\nSelect file to import.")
     files = []
     for item in input_folder_path.iterdir():
         files.append(item.name)
@@ -99,7 +101,6 @@ def csv_file_to_df(chosen_file, folder_path=input_folder_path):
 def basic_cleaning(df_raw):
     def delete_negative_times(df):
         import numpy as np
-        print("Removing negative times, lower than 30s, and other...")
         negval_condition = (df['Time Spent (Hrs)'] < 0) & (df['Type'] == 'Adjusted')
         pos_rows = df[~negval_condition]
         neg_rows = df[negval_condition]
@@ -118,8 +119,7 @@ def basic_cleaning(df_raw):
 
         return pos_rows
    
-    print("Basic Cleaning...")
-
+    
     df_raw.drop('User ID', axis=1, inplace=True)
     df_raw.drop('Task ID', axis=1, inplace=True)
     df_raw.drop('Comment', axis=1, inplace=True)
@@ -144,8 +144,7 @@ def basic_cleaning(df_raw):
 
     ini_neg = len(df_clean[df_clean['Time Spent (Hrs)'] < 0])
     post_neg = len(df_clean2[df_clean2['Time Spent (Hrs)'] < 0])
-    print(f"Deleted {post_neg-ini_neg} negative values, converted removed {len(df_clean2)-len(df_clean)} total rows")
-
+    logger.debug(f"Deleted {post_neg-ini_neg} negative values and removed {len(df_clean2)-len(df_clean)} total rows")
     return df_clean2
 
 def edit_course_params(df, file=None):

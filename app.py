@@ -7,7 +7,7 @@ from core.logger import setup_logger, set_logger_config, set_third_party_loggers
 
 def main():
     exists, has_rows = data.check_table()
-    logger.debug(f"exists={exists}, has_rows={has_rows==True}")
+    logger.debug(f"exists={exists}, has_rows={has_rows}")
 
     if not has_rows:
         logger.info(f"Database does not contain any data")
@@ -58,6 +58,7 @@ def import_csv_to_database():
 
     raw_df = dimp.csv_file_to_df(file_choice)
 
+    logger.info(f"Performing cleaning of {file_choice}")
     df_clean = dimp.basic_cleaning(raw_df)
     df_edit = dimp.edit_course_params(df=df_clean, file=file_choice)
     
@@ -76,6 +77,7 @@ def import_current_year_csv():
 
     raw_df = dimp.csv_file_to_df(chosen_file=file_name, folder_path=folder_path)
 
+    logger.info(f"Performing cleaning of {file_name}")
     df_clean = dimp.basic_cleaning(raw_df)
     df_edit = dimp.edit_course_params(df=df_clean, file=file_name)
     
