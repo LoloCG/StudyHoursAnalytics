@@ -9,11 +9,12 @@ def main():
     exists, has_rows = data.check_table()
     logger.debug(f"exists={exists}, has_rows={has_rows}")
 
+    main_menu_opts = None
     if not has_rows:
         logger.info(f"Database does not contain any data")
-        print("Database does not contain any data.\nSelect file to import.")
-        import_csv_to_database()
-    
+        start_course_import()
+        main_menu_opts
+
     while True:
         choice = main_menu_loop()
         if choice is None: break
@@ -24,15 +25,16 @@ def main():
 def main_menu_loop():
     option_str_list = [
         'Display daily study Hours',
-        'Import .CSV file',
-        "Import current year's .CSV file",
+        # 'Import .CSV file',
+        "Import/update current year's .CSV file",
         # 'Display Weekly Study Hours'
     ]
     choice = clin.ask_loop_show_and_select_options(option_str_list=option_str_list, exit_msg='Exit program.')
     if choice is None: return None
+
     options_funcs = [
         lambda: plot_daily_hours(),
-        lambda: import_csv_to_database(),
+        # lambda: import_csv_to_database(), # Change to another abstraction function that includes the files...
         lambda: import_current_year_csv()
         ]
     clin.call_function_from_choice(user_choice=choice, options_funcs=options_funcs)
@@ -52,9 +54,26 @@ def plot_daily_hours():
     dan.plot_daily_subj_hours_line(df_daily, current_course=current_course, add_avg=True, roll_avg=7)
     return
 
-def import_csv_to_database():
-    file_choice = dimp.show_and_select_csv()
-    print(file_choice)
+def start_course_import():
+    file_choice = None
+    past_courses, current_course_dict = dimp.check_json_courses_data()
+    print(f"dict: {current_course_dict}")
+    
+    main_menu_opts = None
+    if past_courses is None:
+        file_choice = dimp.show_and_select_csv()
+        import_csv_to_database(file_choice)
+    else:
+        for course_file in past_courses:
+            import_csv_to_database(course_file)
+        if current_course_dict:
+            import_current_year_csv(
+                folder_path=current_course_dict['folder path'], 
+                file_name=current_course_dict['csv name'])
+
+def import_csv_to_database(file_choice=None):
+    if file_choice == None :
+        file_choice = dimp.show_and_select_csv()
 
     raw_df = dimp.csv_file_to_df(file_choice)
 
@@ -71,10 +90,10 @@ def import_csv_to_database():
     data.add_weekly_hours(weekly_df)
     return True
 
-def import_current_year_csv():
-    folder_path, file_name = dimp.select_current_year_file()
-    logger.debug(f"Current year file:\n{folder_path}/{file_name}")
-
+def import_current_year_csv(folder_path=None, file_name=None):
+    if folder_path == None and file_name == None:
+        folder_path, file_name = dimp.select_current_year_file()
+    
     raw_df = dimp.csv_file_to_df(chosen_file=file_name, folder_path=folder_path)
 
     logger.info(f"Performing cleaning of {file_name}")

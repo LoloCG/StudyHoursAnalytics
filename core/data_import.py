@@ -335,3 +335,27 @@ def generate_weekly_hours_dataframe(df_clean):
 
     return weekly_df
 
+def check_json_courses_data():
+    config = {}
+    with open(config_file, 'r') as file:
+        try:
+            config = json.load(file)
+            
+        except json.JSONDecodeError:
+            logger.debug(f"No courses previously defined in config")
+            return None
+
+    past_courses = []
+    current_course_dict = config.get('Current year', None)
+    for key, value in config.items():        
+        if key != 'Current year' and key != current_course_dict['csv name']:
+            past_courses.append(key)
+
+    logger.debug(f"Past courses found in config = {past_courses}")
+    if current_course_dict:
+        logger.debug(f"Current course path = {current_course_dict['folder path']}/{current_course_dict['csv name']}")
+    else:
+        logger.debug("'folder path' or 'csv name' not found in config")
+        past_courses = None
+
+    return past_courses, current_course_dict
