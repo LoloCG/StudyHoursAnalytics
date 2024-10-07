@@ -1,7 +1,5 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from .logger import setup_logger
-logger = setup_logger()
 
 def pivoter(df):
     df_pivot = df.pivot_table(index='Week', columns=['Period', 'Subject'], values='Time Spent (Hrs)', fill_value=0)
@@ -17,7 +15,7 @@ def plot_daily_subj_hours_line(df, current_course=None, add_avg=False, roll_avg=
         Plots a line chart showing the time spent on different subjects over a period of time.
     '''
     df = df.sort_values(by='Date')
-    logger.info(f"last day in plot: {pd.to_datetime(df['Date'].max()).strftime('%d-%m-%Y')} in {df.loc[df['Date'].idxmax(), 'Course']}")
+    # logger.info(f"last day in plot: {pd.to_datetime(df['Date'].max()).strftime('%d-%m-%Y')} in {df.loc[df['Date'].idxmax(), 'Course']}")
 
     df = df[['Course','Period', 'Day', 'Time Spent (Hrs)']]
     

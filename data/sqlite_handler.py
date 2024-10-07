@@ -1,8 +1,6 @@
 from SQLite_ORM.basics import *
 from SQLite_ORM.pandas_addon import *
 from pathlib import Path
-from core.logger import setup_logger
-logger = setup_logger()
 
 db_name = 'studyanalytics.db'
 db_path = Path(__file__).resolve().parent.parent
@@ -89,7 +87,7 @@ class TableManager:
 
     def upsert_to_table(self, df, unique_cols):
         table = self.selected_table
-        logger.debug(f"upsert_with_df df into {table} by the columns {unique_cols}")
+        # logger.debug(f"upsert_with_df df into {table} by the columns {unique_cols}")
         
         upsert_with_df(
             dataframe=df, 
@@ -99,10 +97,10 @@ class TableManager:
 
     def insert_if_new(self, df, unique_cols):
         table = self.selected_table
-        logger.debug(f"insert_newdata_from_df, df into {table} by the columns {unique_cols}")
+        # logger.debug(f"insert_newdata_from_df, df into {table} by the columns {unique_cols}")
         insert_newdata_from_df(
             dataframe=df, 
             connector_obj=self.connector_obj, 
             table_name=table, 
             unique_cols=unique_cols)
-        logger.debug(f"Insertion to db ended")
+        # logger.debug(f"Insertion to db ended")

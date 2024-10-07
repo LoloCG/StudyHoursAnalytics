@@ -7,14 +7,16 @@ import CLI_native_tools as clin # TODO disconnect CLI tools from data import
 import json
 from data.json_handler import json_upsert # absolute import example
 
-from .logger import setup_logger
-logger = setup_logger()
+# from .logger import setup_logger
 
 input_folder_path = Path(r'C:\Users\Lolo\Desktop\Programming\GITRepo\StudyHoursAnalytics\data_example') 
 config_file = Path('config.json')
 
-def check_json_at_start():
-    pass
+def get_files_from_input_path():
+    file_paths = []
+    for item in input_folder_path.iterdir():
+        files.append(item)
+    return file_paths
 
 def select_current_year_file():
     def ask_current_year_path():
@@ -77,12 +79,12 @@ def select_current_year_file():
 
     folder_path = ask_current_year_path() if 'folder path' not in config['Current year'] else config['Current year']['folder path']
     file_name = ask_current_year_csv() if 'csv name' not in config['Current year'] else config['Current year']['csv name']
-    logger.debug(f"Selected current year file path:\n{folder_path}/{file_name}")
+    # logger.debug(f"Selected current year file path:\n{folder_path}/{file_name}")
 
     return folder_path, file_name
     
-def show_and_select_csv():
-    print("Database does not contain any data.\nSelect file to import.")
+def show_and_select_csv(): # No longer used
+    # print("Database does not contain any data.\nSelect file to import.")
     files = []
     for item in input_folder_path.iterdir():
         files.append(item.name)
@@ -144,12 +146,12 @@ def basic_cleaning(df_raw):
 
     ini_neg = len(df_clean[df_clean['Time Spent (Hrs)'] < 0])
     post_neg = len(df_clean2[df_clean2['Time Spent (Hrs)'] < 0])
-    logger.debug(f"Deleted {post_neg-ini_neg} negative values and removed {len(df_clean2)-len(df_clean)} total rows")
+    # logger.debug(f"Deleted {post_neg-ini_neg} negative values and removed {len(df_clean2)-len(df_clean)} total rows")
     return df_clean2
 
 def edit_course_params(df, file=None):
     def update_df_with_json_config(df, config, file):
-        logger.debug(f"{file} found in config JSON") 
+        # logger.debug(f"{file} found in config JSON") 
         
         df['Course'] = config[file]["Course Name"]
         df = df[df['Period'].isin(config[file]["Periods maintained"])]
@@ -172,12 +174,12 @@ def edit_course_params(df, file=None):
         
         df.loc[:, 'Course'] = df['Course'].ffill()
 
-        logger.debug(f"course parameters added from json correctly.")  
+        # logger.debug(f"course parameters added from json correctly.")  
         return df
 
     if file is not None and config_file.exists():
         config = None
-        logger.debug(f"trying to search {file} in JSON")
+        # logger.debug(f"trying to search {file} in JSON")
         with open(config_file, 'r') as j_file:
             config = json.load(j_file)
 
@@ -337,13 +339,12 @@ def generate_weekly_hours_dataframe(df_clean):
 
 def check_json_courses_data():
     config = {}
-    with open(config_file, 'r') as file:
-        try:
+    try:
+        with open(config_file, 'r') as file:
             config = json.load(file)
-            
-        except json.JSONDecodeError:
-            logger.debug(f"No courses previously defined in config")
-            return None
+    except FileNotFoundError:
+        # logger.debug(f"Json config not found.")
+        return None, None
 
     past_courses = []
     current_course_dict = config.get('Current year', None)
@@ -351,11 +352,12 @@ def check_json_courses_data():
         if key != 'Current year' and key != current_course_dict['csv name']:
             past_courses.append(key)
 
-    logger.debug(f"Past courses found in config = {past_courses}")
+    # logger.debug(f"Past courses found in config = {past_courses}")
     if current_course_dict:
-        logger.debug(f"Current course path = {current_course_dict['folder path']}/{current_course_dict['csv name']}")
+        print(f"Current course path = {current_course_dict['folder path']}/{current_course_dict['csv name']}")
+        # logger.debug(f"Current course path = {current_course_dict['folder path']}/{current_course_dict['csv name']}")
     else:
-        logger.debug("'folder path' or 'csv name' not found in config")
+        # logger.debug("'folder path' or 'csv name' not found in config")
         past_courses = None
 
     return past_courses, current_course_dict
