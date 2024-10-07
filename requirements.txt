@@ -5,3 +5,4 @@ SQLite_ORM[pandas_addon] @ git+https://github.com/LoloCG/Lolos_Packages.git#subd
 git+https://github.com/LoloCG/Lolos_Packages.git#subdirectory=Data_Analysis
 git+https://github.com/LoloCG/Lolos_Packages.git#subdirectory=UIs/CLI_native_tools
 kivy
+git+https://github.com/LoloCG/Lolos_Packages.git#subdirectory=Python_Logger

@@ -1,6 +1,9 @@
 from SQLite_ORM.basics import *
 from SQLite_ORM.pandas_addon import *
 from pathlib import Path
+from PyLogger.basic_logger import LoggerSingleton
+
+logger = LoggerSingleton().get_logger()
 
 db_name = 'studyanalytics.db'
 db_path = Path(__file__).resolve().parent.parent
@@ -19,6 +22,7 @@ def check_table(table_name=main_table_name):
 def add_main_data(df):
     tm = TableManager()
     with tm:
+        logger.debug(f"Adding data to {main_table_name} table")
         tm.create_and_append_to_table(df, table=main_table_name)
 
 def add_subject_hours(df):

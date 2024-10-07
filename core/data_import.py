@@ -6,8 +6,9 @@ from pathlib import Path
 import CLI_native_tools as clin # TODO disconnect CLI tools from data import
 import json
 from data.json_handler import json_upsert # absolute import example
+from PyLogger.basic_logger import LoggerSingleton
 
-# from .logger import setup_logger
+logger = LoggerSingleton(main_log_level='DEBUG').get_logger()
 
 input_folder_path = Path(r'C:\Users\Lolo\Desktop\Programming\GITRepo\StudyHoursAnalytics\data_example') 
 config_file = Path('config.json')
@@ -15,7 +16,7 @@ config_file = Path('config.json')
 def get_files_from_input_path():
     file_paths = []
     for item in input_folder_path.iterdir():
-        files.append(item)
+        file_paths.append(item)
     return file_paths
 
 def select_current_year_file():
@@ -77,7 +78,7 @@ def select_current_year_file():
     with open(config_file, 'r') as file:
         config = json.load(file)
 
-    folder_path = ask_current_year_path() if 'folder path' not in config['Current year'] else config['Current year']['folder path']
+    folder_path = ask_current_year_path() if 'Current year' not in config else config['Current year']['folder path']
     file_name = ask_current_year_csv() if 'csv name' not in config['Current year'] else config['Current year']['csv name']
     # logger.debug(f"Selected current year file path:\n{folder_path}/{file_name}")
 
@@ -93,6 +94,7 @@ def show_and_select_csv(): # No longer used
     return files[choice-1]
 
 def csv_file_to_df(chosen_file, folder_path=input_folder_path):
+    logger.debug(f"Importing CSV file {chosen_file}")
     input_csv = imex.ExcelImporter() 
     input_csv.add_extraction_folder(folder_path) 
     input_csv.add_file(chosen_file) 
@@ -120,8 +122,7 @@ def basic_cleaning(df_raw):
         pos_rows = pos_rows[~(pos_rows['Time Spent (Hrs)'] <= 0.008)]
 
         return pos_rows
-   
-    
+
     df_raw.drop('User ID', axis=1, inplace=True)
     df_raw.drop('Task ID', axis=1, inplace=True)
     df_raw.drop('Comment', axis=1, inplace=True)
@@ -179,7 +180,7 @@ def edit_course_params(df, file=None):
 
     if file is not None and config_file.exists():
         config = None
-        # logger.debug(f"trying to search {file} in JSON")
+        logger.debug(f"trying to search {file} in JSON")
         with open(config_file, 'r') as j_file:
             config = json.load(j_file)
 
@@ -187,15 +188,15 @@ def edit_course_params(df, file=None):
             df = update_df_with_json_config(df, config, file)
             return df
         else:  
-            print(f"{file} not found in JSON")
+            logger.error(f"{file} not found in JSON")
     else: 
-        print(f"Json file does not exist")
+        logger.error(f"Json file does not exist")
 
     json_config_params = {}
     json_config_params[file] = {}
 
-    if file is not None: print(f"Select course name for {file}.")
-    else: print(f"Select course name for current selected file")
+    if file is not None: logger.info(f"Select course name for {file}.")
+    else: logger.info(f"Select course name for current selected file")
     course_name = input("Course name: ")
     df['Course'] = course_name
 
@@ -203,10 +204,9 @@ def edit_course_params(df, file=None):
     periods_maintained = []
     while True:
         periods = df['Period'].unique()
-        print(f"Edit periods in the course?:")
+        logger.info(f"Edit periods in the course?:")
         choice = clin.ask_loop_show_and_select_options(periods, exit_msg='Continue.')
         if choice == None: 
-            print("Continuing...")
             json_config_params[file]["Periods maintained"] = periods_maintained
             json_upsert(config_file, json_config_params)
             return df
@@ -215,7 +215,7 @@ def edit_course_params(df, file=None):
 
         if keep_period == "n":
             df = df[df['Period'] != periods[choice-1]]
-            print(f"Period '{periods[choice-1]}' removed from dataset.")
+            logger.debug(f"Period '{periods[choice-1]}' removed from dataset.")
             try:
                 periods_maintained.remove(periods[choice-1])
             except:
@@ -230,7 +230,7 @@ def edit_course_params(df, file=None):
         if name_change_ask == "y":
             new_period_name = input(f"New name: ")
             df.loc[df['Period'] == periods[choice-1], 'Period'] = new_period_name
-            print(f"Period '{periods[choice-1]}' has been renamed to '{new_period_name}'.")
+            logger.debug(f"Period '{periods[choice-1]}' has been renamed to '{new_period_name}'.")
             period_name = new_period_name
             
         else: 
@@ -239,7 +239,7 @@ def edit_course_params(df, file=None):
         json_config_params[file][periods[choice-1]]["Period name"] = period_name
 
         earliest_date = df.loc[df['Period'] == period_name, 'Start Date'].min().strftime('%a, %d %b %Y') #.strftime('%d-%m-%Y')
-        print(f"Start date of {period_name} = {earliest_date}")
+        logger.debug(f"Start date of {period_name} = {earliest_date}")
         
         adjust_date = input(f"Do you want to adjust the start date? (Y/N): ").lower()
         
@@ -257,7 +257,7 @@ def edit_course_params(df, file=None):
             } 
 
             df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-            print(f"Start date for period '{period_name}' updated to {new_start_date.strftime('%a, %d %b %Y')}.")
+            logger.debug(f"Start date for period '{period_name}' updated to {new_start_date.strftime('%a, %d %b %Y')}.")
 
             json_config_params[file][periods[choice-1]]["Start date"] = new_start_date.strftime('%Y-%m-%d')
 
@@ -351,7 +351,8 @@ def check_json_courses_data():
     for key, value in config.items():        
         if key != 'Current year' and key != current_course_dict['csv name']:
             past_courses.append(key)
-
+        else:
+            continue
     # logger.debug(f"Past courses found in config = {past_courses}")
     if current_course_dict:
         print(f"Current course path = {current_course_dict['folder path']}/{current_course_dict['csv name']}")
