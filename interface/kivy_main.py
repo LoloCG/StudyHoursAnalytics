@@ -9,7 +9,6 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.textinput import TextInput
-from kivy.uix.widget import Widget
 from PyLogger.basic_logger import LoggerSingleton
 
 # from app import AppMenuInterface
@@ -47,7 +46,7 @@ class FileSelectionScreen(BoxLayout):
             )
         scroll_layout.bind(minimum_height=scroll_layout.setter('height'))
 
-        file_paths = self.start_seq.file_paths # Ensure the height grows with content
+        file_paths = self.start_seq.manual_import_past_courses # Ensure the height grows with content
 
         self.checkbox_mapping = {}
 
@@ -114,36 +113,54 @@ class FileSelectionScreen(BoxLayout):
         )
         self.add_widget(course_name_input)
 
-
-class MainMenuLayout(Widget):
+class MainMenuLayout(BoxLayout):
     def __init__(self, AppMenuInterface):
-        super(MainWindows, self).__init__()
+        super(MainMenuLayout, self).__init__()
         self.menu_interface = AppMenuInterface()
+        
+        Window.size = (300, 250)
+        Window.clearcolor = (0.1, 0.1, 0.1, 1)
 
-        main_layout = GridLayout(orientation='tb-lr', cols=1)
-        top_label = Label(text ="Study Hours Analytics")
-        main_layout.add_widget(top_label)
-        self.add_widget(main_layout)
+        self.orientation='vertical'
+        self.spacing=10
+        self.padding=10
+        
+        top_label = Label(
+            text ="Study Hours Analytics",
+            padding=(40, 40),
+            size_hint=(1, None),
+            height=100)
+        self.add_widget(top_label)
 
         display_daily_button = Button(
             text="Display daily hours",
             padding=(20, 40),
             size_hint=(1, None),
-            height=50)
+            height=50,)
         
-        import_button.bind(on_press=self.menu_interface.plot_daily_hours())
+        display_daily_button.bind(on_press=self.plot_daily_hours_action)
         self.add_widget(display_daily_button)
+
+        # self.add_widget(main_layout)
+
+    def plot_daily_hours_action(self, instance):
+        self.menu_interface.plot_daily_hours()
+        return
 
 class MainWindows(App):
     def __init__(self, start_seq, AppMenuInterface):
         super(MainWindows, self).__init__()
         self.start_seq = start_seq
-    
-    def build(self):
-        self.start_seq.start_db_check()
+        self.AppMenuInterface = AppMenuInterface
 
-        if self.start_seq.file_paths:
-            logger.info("Running FileSelectionScreen")
+    def build(self):
+        result = self.start_seq.start_sequence_check()
+        if not result:
+            logger.debug("Running MainMenuLayout")
+            return MainMenuLayout(self.AppMenuInterface)
+
+        else:
+            logger.debug("Running FileSelectionScreen")
             return FileSelectionScreen(self.start_seq)  
         
-        return MainMenuLayout(AppMenuInterface)
+        

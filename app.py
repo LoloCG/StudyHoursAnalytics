@@ -26,34 +26,43 @@ class AppMenuInterface:
         return
 
 class StartSequence:
-    def start_db_check(self):
+    def start_sequence_check(self):
         exists, has_rows = data.check_table()
         logger.debug(f"exists={exists}, has_rows={has_rows}")
 
-        if not has_rows: # No db, it needs to import files
+        if not has_rows:
             logger.info(f"Database does not contain any data")
-            past_courses, current_course_dict = dimp.check_json_courses_data() # check existence of config for auto loading.
-
-            if past_courses is None:
-                self.file_paths = dimp.get_files_from_input_path() # and execute further logic with them
+            past_courses, current_course_dict = dimp.check_json_courses_data()
             
+            if past_courses and current_course_dict:
+                self.autoimport_past_from_json(past_courses)       
+                self.autoimport_current_from_json(current_course_dict)
+                return None
             else:
-                for course_file in past_courses:
-                    raw_df = dimp.csv_file_to_df(course_file)
-                    df_edit = self.edit_course_params(df=raw_df, file_name=course_file)
-                    self.add_df_to_tables(df=df_edit)
-                    
-            if current_course_dict:
-                raw_df = dimp.csv_file_to_df(
-                    chosen_file=current_course_dict['csv name'], # 4º FarmaNutr TDL_Log
-                    folder_path=current_course_dict['folder path']) #G:\Mi unidad\24-25-4ºFarmaNutr
-                
-                # df_edit = self.edit_course_params(df=raw_df,file_name=current_course_dict['csv name'])
-                self.upsert_current_year_table(df=raw_df, file_name=current_course_dict['csv name'])
-            else:
-                # This will later contain the logic of selection of current year files and their cleaning... todo in future code...
                 pass
-                # folder_path, file_name = dimp.select_current_year_file()
+                # TODO
+
+        if has_rows:
+            return None
+
+    def autoimport_past_from_json(self,past_courses):
+        for course_file in past_courses:
+            raw_df = dimp.csv_file_to_df(course_file)
+            df_edit = self.edit_course_params(df=raw_df, file_name=course_file)
+            self.add_df_to_tables(df=df_edit)
+
+    def autoimport_current_from_json(self,current_course_dict):
+        # file_name = current_course_dict['csv name'] # 4º FarmaNutr TDL_Log
+        # folder_path = current_course_dict['folder path'] #G:\Mi unidad\24-25-4ºFarmaNutr
+
+        folder_path, file_name = dimp.select_current_year_file()
+        raw_df = dimp.csv_file_to_df(chosen_file=file_name, folder_path=folder_path)
+        df_edit = self.edit_course_params(df=raw_df, file_name=file_name)
+        self.upsert_current_year_table(df=df_edit, file_name=file_name)
+
+    def manual_import_past_courses(self):
+        file_paths = dimp.get_files_from_input_path()
+        return file_paths
 
     def import_selected_courses(self, selected_files):
         dict_df = {}
@@ -85,17 +94,15 @@ class StartSequence:
         self.upsert_current_year_table(df=df, file_name=file_name)
 
     def upsert_current_year_table(self, df, file_name):
-        df_edit = self.edit_course_params(df=df, file_name=file_name)
-
         tm = data.TableManager()
         with tm:
             unique_cols = ['Start Date', 'Start Time', 'End Time']
             tm.select_table(table_opt='main')
             tm.upsert_to_table(
-                df=df_edit, 
+                df=df, 
                 unique_cols=unique_cols)
             
-        df_daily = dimp.basic_to_daily_clean(df_edit)
+        df_daily = dimp.basic_to_daily_clean(df)
         with tm:
             unique_cols = ['Course', 'Period', 'Subject', 'Day']
             tm.select_table(table_opt='day')
