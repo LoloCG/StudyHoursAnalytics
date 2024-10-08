@@ -17,7 +17,7 @@ logger_instance = LoggerSingleton(main_log_level='DEBUG', disable_third_party=Tr
 logger_instance.set_third_party_loggers_level(level='ERROR')
 logger = logger_instance.get_logger(__name__)
 
-class FileSelectionScreen(BoxLayout):
+class FileSelectionScreen(BoxLayout): # not completed yet
     def __init__(self, start_seq):
         super(FileSelectionScreen, self).__init__()
         self.orientation = 'vertical'
@@ -130,18 +130,43 @@ class MainMenuLayout(BoxLayout):
             padding=(40, 40),
             size_hint=(1, None),
             height=100)
+            
         self.add_widget(top_label)
 
-        display_daily_button = Button(
-            text="Display daily hours",
-            padding=(20, 40),
-            size_hint=(1, None),
-            height=50,)
-        
-        display_daily_button.bind(on_press=self.plot_daily_hours_action)
-        self.add_widget(display_daily_button)
+        buttons_layout = self.generate_options_buttons()
+        self.add_widget(buttons_layout)
 
-        # self.add_widget(main_layout)
+    def generate_menu_stats(self):
+        pass
+
+    def generate_options_buttons(self):
+        buttons_layout = GridLayout(
+            cols=1, size_hint_y=None
+        )
+        buttons_layout.bind(minimum_height=buttons_layout.setter('height'))  # Ensure it adjusts its height to fit children
+
+        options_dict = {
+            'Display daily hours': self.plot_daily_hours_action,  # 'Update Course Data'
+            'Update Course Data': self.update_course_data,
+            }
+
+        for option, funct in options_dict.items():
+            option_btn = Button(
+                text=option,
+                padding=(20, 40),
+                size_hint=(1, None),
+                height=50
+                )
+
+            option_btn.bind(on_press=funct)
+
+            buttons_layout.add_widget(option_btn)
+
+        return buttons_layout
+
+    def update_course_data(self, instance):
+        self.menu_interface.update_current_course()
+        return
 
     def plot_daily_hours_action(self, instance):
         self.menu_interface.plot_daily_hours()
@@ -162,5 +187,3 @@ class MainWindows(App):
         else:
             logger.debug("Running FileSelectionScreen")
             return FileSelectionScreen(self.start_seq)  
-        
-        

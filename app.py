@@ -25,6 +25,16 @@ class AppMenuInterface:
         dan.plot_daily_subj_hours_line(df_daily, current_course=current_course, add_avg=True, roll_avg=7)
         return
 
+    def update_current_course(self):
+        logger.info(f"Updating current course data.")
+        start_seq = StartSequence()
+        df, file_name = start_seq.select_current_year()
+        df_edit = start_seq.edit_course_params(df=df, file_name=file_name)
+        start_seq.upsert_current_year_table(df=df_edit)
+
+    def get_basic_stats(self):
+        pass
+    
 class StartSequence:
     def start_sequence_check(self):
         exists, has_rows = data.check_table()
@@ -91,9 +101,10 @@ class StartSequence:
     def select_current_year(self):
         folder_path, file_name = dimp.select_current_year_file()
         df = dimp.csv_file_to_df(chosen_file=file_name, folder_path=folder_path)
-        self.upsert_current_year_table(df=df, file_name=file_name)
+        return df, file_name
 
-    def upsert_current_year_table(self, df, file_name):
+    def upsert_current_year_table(self, df):
+        logger.debug(f"Upserting current year df to db table.")
         tm = data.TableManager()
         with tm:
             unique_cols = ['Start Date', 'Start Time', 'End Time']
@@ -109,7 +120,7 @@ class StartSequence:
             tm.upsert_to_table(df=df_daily, unique_cols=unique_cols)
         
         logger.info("Finalized current course import/update")
-
+        
         return True
 
 logger_instance = LoggerSingleton(main_log_level='DEBUG', disable_third_party=True)

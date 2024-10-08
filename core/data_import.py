@@ -21,7 +21,7 @@ def get_files_from_input_path():
 
 def select_current_year_file():
     def ask_current_year_path():
-        print("Current year's .csv file not found.")
+        logger.info("Current year's .csv file not found.")
         
         csv_folder_path = ''
         while True:
@@ -53,7 +53,7 @@ def select_current_year_file():
             else: continue
 
         if not files:
-            print("No CSV files found in the directory.")
+            logger.info("No CSV files found in the directory.")
             return None
 
         choice = clin.show_and_select_options(str_list=files)
@@ -99,7 +99,7 @@ def csv_file_to_df(chosen_file, folder_path=input_folder_path):
     input_csv.add_extraction_folder(folder_path) 
     input_csv.add_file(chosen_file) 
     df = input_csv.csv_to_dataframe()
-    
+    logger.debug(f"Succesfully imported {chosen_file} to df")
     return df
 
 def basic_cleaning(df_raw):
@@ -147,12 +147,12 @@ def basic_cleaning(df_raw):
 
     ini_neg = len(df_clean[df_clean['Time Spent (Hrs)'] < 0])
     post_neg = len(df_clean2[df_clean2['Time Spent (Hrs)'] < 0])
-    # logger.debug(f"Deleted {post_neg-ini_neg} negative values and removed {len(df_clean2)-len(df_clean)} total rows")
+    logger.debug(f"Deleted {post_neg-ini_neg} negative values and removed {len(df_clean2)-len(df_clean)} total rows")
     return df_clean2
 
 def edit_course_params(df, file=None):
     def update_df_with_json_config(df, config, file):
-        # logger.debug(f"{file} found in config JSON") 
+        logger.debug(f"{file} found in config JSON") 
         
         df['Course'] = config[file]["Course Name"]
         df = df[df['Period'].isin(config[file]["Periods maintained"])]
@@ -175,7 +175,7 @@ def edit_course_params(df, file=None):
         
         df.loc[:, 'Course'] = df['Course'].ffill()
 
-        # logger.debug(f"course parameters added from json correctly.")  
+        logger.debug(f"course parameters added from json correctly.")  
         return df
 
     if file is not None and config_file.exists():
@@ -293,6 +293,8 @@ def basic_to_daily_clean(df_clean):
         df_merged['Day'] = df_merged['Start Date'].apply(lambda x: (pd.Timestamp(x) - period_min).days)
         
         return df_merged
+    
+    logger.debug(f"Converting basic data to daily data.")
 
     wanted_cols = ['Course', 'Period', 'Subject', 'Time Spent (Hrs)', 'Start Date']
     df = df_clean[wanted_cols]
@@ -315,6 +317,8 @@ def basic_to_daily_clean(df_clean):
 
     df['Course'] = df['Course'].ffill()
     
+    logger.debug(f"Last day in daily dataframe: {df['Date'].max().strftime('%d-%m-%Y')}.")
+
     return df
 
 def generate_weekly_hours_dataframe(df_clean):
