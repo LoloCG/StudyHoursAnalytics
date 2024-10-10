@@ -8,7 +8,7 @@ import json
 from data.json_handler import json_upsert # absolute import example
 from PyLogger.basic_logger import LoggerSingleton
 
-logger = LoggerSingleton(main_log_level='DEBUG').get_logger()
+logger = LoggerSingleton().get_logger()
 
 input_folder_path = Path(r'C:\Users\Lolo\Desktop\Programming\GITRepo\StudyHoursAnalytics\data_example') 
 config_file = Path('config.json')
@@ -359,7 +359,7 @@ def check_json_courses_data():
             continue
     # logger.debug(f"Past courses found in config = {past_courses}")
     if current_course_dict:
-        print(f"Current course path = {current_course_dict['folder path']}/{current_course_dict['csv name']}")
+        logger.debug(f"Current course path = {current_course_dict['folder path']}/{current_course_dict['csv name']}")
         # logger.debug(f"Current course path = {current_course_dict['folder path']}/{current_course_dict['csv name']}")
     else:
         # logger.debug("'folder path' or 'csv name' not found in config")

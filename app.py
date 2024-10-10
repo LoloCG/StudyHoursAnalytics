@@ -38,21 +38,27 @@ class AppMenuInterface:
 class StartSequence:
     def start_sequence_check(self):
         exists, has_rows = data.check_table()
-        logger.debug(f"exists={exists}, has_rows={has_rows}")
+        logger.debug(f"database table: exists={exists}, has_rows={has_rows}")
 
         if not has_rows:
-            logger.info(f"Database does not contain any data")
+            logger.info(f"Database does not contain any data.")
             past_courses, current_course_dict = dimp.check_json_courses_data()
             
             if past_courses and current_course_dict:
-                self.autoimport_past_from_json(past_courses)       
+                logger.info(f"JSON config contains past and current course data.")
+                self.autoimport_past_from_json(past_courses) 
+                logger.info(f"Correctly imported past course data.")     
                 self.autoimport_current_from_json(current_course_dict)
                 return None
             else:
+                logger.warning(f"JSON config does NOT contain current or past course data.")
                 pass
-                # TODO
-
+                
         if has_rows:
+            logger.info(f"Database contains existing data.")
+            df, file_name = self.select_current_year()
+            df_edit = self.edit_course_params(df=df, file_name=file_name)
+            self.upsert_current_year_table(df=df_edit)
             return None
 
     def autoimport_past_from_json(self,past_courses):
@@ -62,13 +68,10 @@ class StartSequence:
             self.add_df_to_tables(df=df_edit)
 
     def autoimport_current_from_json(self,current_course_dict):
-        # file_name = current_course_dict['csv name'] # 4º FarmaNutr TDL_Log
-        # folder_path = current_course_dict['folder path'] #G:\Mi unidad\24-25-4ºFarmaNutr
-
         folder_path, file_name = dimp.select_current_year_file()
         raw_df = dimp.csv_file_to_df(chosen_file=file_name, folder_path=folder_path)
         df_edit = self.edit_course_params(df=raw_df, file_name=file_name)
-        self.upsert_current_year_table(df=df_edit, file_name=file_name)
+        self.upsert_current_year_table(df=df_edit)
 
     def manual_import_past_courses(self):
         file_paths = dimp.get_files_from_input_path()
@@ -123,7 +126,8 @@ class StartSequence:
         
         return True
 
-logger_instance = LoggerSingleton(main_log_level='DEBUG', disable_third_party=True)
+logger_instance = LoggerSingleton()
+logger_instance.set_logger_config(level='DEBUG')
 logger_instance.set_third_party_loggers_level(level='ERROR')
 logger = logger_instance.get_logger()
 logger.info("Starting main sequence...")

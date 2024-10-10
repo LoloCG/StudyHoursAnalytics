@@ -11,11 +11,8 @@ from kivy.uix.checkbox import CheckBox
 from kivy.uix.textinput import TextInput
 from PyLogger.basic_logger import LoggerSingleton
 
-# from app import AppMenuInterface
+logger = LoggerSingleton().get_logger()
 
-logger_instance = LoggerSingleton(main_log_level='DEBUG', disable_third_party=True)
-logger_instance.set_third_party_loggers_level(level='ERROR')
-logger = logger_instance.get_logger(__name__)
 
 class FileSelectionScreen(BoxLayout): # not completed yet
     def __init__(self, start_seq):
