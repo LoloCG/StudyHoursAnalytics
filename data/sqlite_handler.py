@@ -33,7 +33,7 @@ def add_subject_hours(df):
 def add_weekly_hours(df):
     tm = TableManager()
     with tm:
-        tm.create_and_append_to_table(df, table=weekly_hours_table_name)
+        tm.create_and_append_to_table(df=df, table=weekly_hours_table_name)
 
 def get_df_periods(data_series, periods=None, courses=None):
     '''
@@ -71,7 +71,8 @@ class TableManager:
     def __exit__(self, exc_type, exc_value, traceback):
         self.db.connector.close()
         self.connector_obj = None
-
+        self.selected_table = None
+        
     def create_and_append_to_table(self, df, table=None):
         if self.selected_table is None and table is not None:
             table_name = table
@@ -91,8 +92,7 @@ class TableManager:
 
     def upsert_to_table(self, df, unique_cols):
         table = self.selected_table
-        # logger.debug(f"upsert_with_df df into {table} by the columns {unique_cols}")
-        
+        logger.debug(f"upsert_with_df df into {table} by the columns {unique_cols}")
         upsert_with_df(
             dataframe=df, 
             connector_obj=self.connector_obj, 

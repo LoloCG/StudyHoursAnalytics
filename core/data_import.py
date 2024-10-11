@@ -323,23 +323,30 @@ def basic_to_daily_clean(df_clean):
 
 def generate_weekly_hours_dataframe(df_clean):
     ''' '''
-    wanted_cols = ['Period', 'Subject', 'Time Spent (Hrs)', 'Start Date', 'End Date', 'Start Time', 'End Time']
-    df = df_clean[wanted_cols]
-
-    filter_values = ['1St Semester', '2Nd Semester']
-    filter_col = 'Period'
-    df = df[df[filter_col].isin(filter_values)]
+    logger.debug(f"generating weekly hours")
+    wanted_cols = ['Course', 'Period', 'Subject', 'Time Spent (Hrs)', 'Start Date', 'End Date', 'Start Time', 'End Time']
+    
+    df = df_clean[wanted_cols].copy()
 
     df['Start Date'] = pd.to_datetime(df['Start Date'])
+    df = df.dropna(subset=['Start Date'])
 
     df['Week'] = df['Start Date'].dt.to_period('W-SUN').astype(str)
 
-    df = df.groupby(['Period', 'Subject', 'Week'])['Time Spent (Hrs)'].sum().reset_index()
-    # df = df.groupby('Week')['Time Spent (Hrs)'].sum().reset_index()
-    
-    weekly_df = df
+    df = df.groupby(['Course', 'Period', 'Subject', 'Week'])['Time Spent (Hrs)'].sum().reset_index()
+        
+    df = df.sort_values(by='Week').reset_index(drop=True)
+    min_week = pd.Period(df['Week'].min(), freq='W-SUN')
+    max_week = pd.Period(df['Week'].max(), freq='W-SUN')
 
-    return weekly_df
+    # Generate the full range of weeks
+    week_range = pd.period_range(start=min_week, end=max_week, freq='W-SUN')
+
+    # Create a mapping of week to enumeration
+    week_enum = {str(week): i+1 for i, week in enumerate(week_range)}
+    df['Week Number'] = df['Week'].map(week_enum)
+
+    return df
 
 def check_json_courses_data():
     config = {}

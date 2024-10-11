@@ -122,6 +122,12 @@ class StartSequence:
             tm.select_table(table_opt='day')
             tm.upsert_to_table(df=df_daily, unique_cols=unique_cols)
         
+        weekly_df = dimp.generate_weekly_hours_dataframe(df)
+        with tm:
+            unique_cols = ['Period', 'Week', 'Subject']
+            tm.select_table(table_opt='week')
+            tm.upsert_to_table(df=weekly_df, unique_cols=unique_cols)
+
         logger.info("Finalized current course import/update")
         
         return True
@@ -133,7 +139,6 @@ logger = logger_instance.get_logger()
 logger.info("Starting main sequence...")
 main()
 
-# weekly_df = dimp.generate_weekly_hours_dataframe(df_clean)
-# data.add_weekly_hours(weekly_df)
+
 # df_pivot = dan.pivoter(weekly_df)
 # dan.plot_week_hours_barchart(df_pivot)
