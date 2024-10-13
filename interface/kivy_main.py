@@ -133,7 +133,8 @@ class MainMenuLayout(BoxLayout):
         buttons_layout = self.generate_options_buttons()
         self.add_widget(buttons_layout)
 
-    def generate_menu_stats(self):
+    def generate_menu_stats(self, instance):
+        self.menu_interface.get_basic_stats()
         pass
 
     def generate_options_buttons(self):
@@ -144,7 +145,9 @@ class MainMenuLayout(BoxLayout):
 
         options_dict = {
             'Display daily hours': self.plot_daily_hours_action,  # 'Update Course Data'
+            'Display weekly hours': self.plot_weekly_hours_action, 
             'Update Course Data': self.update_course_data,
+            'Get basic data': self.generate_menu_stats,
             }
 
         for option, funct in options_dict.items():
@@ -167,6 +170,10 @@ class MainMenuLayout(BoxLayout):
 
     def plot_daily_hours_action(self, instance):
         self.menu_interface.plot_daily_hours()
+        return
+
+    def plot_weekly_hours_action(self, instance):
+        self.menu_interface.plot_weekly_hours()
         return
 
 class MainWindows(App):

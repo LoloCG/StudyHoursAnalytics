@@ -4,12 +4,6 @@ from PyLogger.basic_logger import LoggerSingleton
 
 logger = LoggerSingleton().get_logger()
 
-def pivoter(df):
-    df_pivot = df.pivot_table(index='Week', columns=['Period', 'Subject'], values='Time Spent (Hrs)', fill_value=0)
-    df_pivot = df_pivot.sort_index()
-    
-    return df_pivot
-
 def plot_daily_subj_hours_line(df, current_course=None, add_avg=False, roll_avg=None):
     import matplotlib.patheffects as path_effects # prev PathEffects
     from matplotlib.ticker import MaxNLocator
@@ -115,16 +109,27 @@ def plot_daily_subj_hours_line(df, current_course=None, add_avg=False, roll_avg=
     plt.tight_layout()
     plt.show()
 
-def plot_week_hours_barchart(df_pivoted):
-    from matplotlib.ticker import MaxNLocator
-    fig, axes = plt.subplots()
+def plot_week_hours_barchart(df):
+    # from matplotlib.ticker import MaxNLocator
 
-    for column in df_pivoted.columns:
-        axes.plot(df_pivoted.index, df_pivoted[column], label=column)
+    df_pivot = df.pivot_table(index='Week Number', columns=['Course', 'Period'], values='Time Spent (Hrs)', fill_value=0) # 
+    df_pivot = df_pivot.sort_index()
+
+    print(df_pivot)
+
+    fig, axes = plt.subplots()
+    # bottom = None
+    for column in df_pivot.columns:
+        axes.bar(df_pivot.index, df_pivot[column]) # , bottom=bottom 
+        # if bottom is None:
+        #     bottom = df_pivot[column]
+        # else:
+        #     bottom += df_pivot[column]
     
-    locator = MaxNLocator(nbins=8) # manual set of ticks
-    axes.xaxis.set_major_locator(locator)
-    plt.xticks(rotation=45)
+    # locator = MaxNLocator(nbins=8) # manual set of ticks
+    # axes.xaxis.set_major_locator(locator)
+    # plt.xticks(rotation=45)
+    # plt.legend(loc='upper left', labelcolor='0.8', frameon=False) 
     plt.tight_layout()
     
     plt.show()

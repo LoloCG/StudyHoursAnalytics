@@ -8,7 +8,13 @@ from PyLogger.basic_logger import LoggerSingleton
 
 def main():
     start_seq = StartSequence()
+    
     MainWindows(start_seq, AppMenuInterface).run()
+
+
+    # logger.info(f"Plotting daily hours graph")
+    # df_weekly = data.get_df_periods(data_series='weekly')
+    # dan.plot_week_hours_barchart(df_weekly)
 
 class AppMenuInterface:
     def plot_daily_hours(self): # will be future option in the main menu
@@ -33,8 +39,30 @@ class AppMenuInterface:
         start_seq.upsert_current_year_table(df=df_edit)
 
     def get_basic_stats(self):
-        pass
-    
+        import pandas as pd
+
+        df = data.get_df_periods(data_series='daily')
+
+        # config = None
+        # with open('config.json', 'r') as file:
+        #     config = json.load(file)
+        
+        # current_course_file = config['Current year']['csv name']
+        # current_course = config[current_course_file]['Course Name']
+        
+        df_sum = df.groupby('Date', as_index=False)['Time Spent (Hrs)'].sum()
+
+        last_day = pd.to_datetime(df_sum['Date'].max()).strftime('%d-%m-%Y')
+        last_day_tot_hours = df_sum.loc[df_sum['Date'].idxmax(), 'Time Spent (Hrs)']
+
+        print(f"last day: {last_day}, with {last_day_tot_hours}")
+        
+    def plot_weekly_hours(self):
+        logger.info(f"Plotting daily hours graph")
+        df_weekly = data.get_df_periods(data_series='weekly')
+
+        dan.plot_week_hours_barchart(df_weekly)
+
 class StartSequence:
     def start_sequence_check(self):
         exists, has_rows = data.check_table()
