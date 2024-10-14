@@ -8,16 +8,14 @@ from PyLogger.basic_logger import LoggerSingleton
 
 def main():
     start_seq = StartSequence()
-    
+    start_seq.start_sequence_check()
     MainWindows(start_seq, AppMenuInterface).run()
 
-
-    # logger.info(f"Plotting daily hours graph")
-    # df_weekly = data.get_df_periods(data_series='weekly')
-    # dan.plot_week_hours_barchart(df_weekly)
+    # menu = AppMenuInterface()
+    # menu.plot_weekly_hours()
 
 class AppMenuInterface:
-    def plot_daily_hours(self): # will be future option in the main menu
+    def plot_daily_hours(self):
         logger.info(f"Plotting daily hours graph")
         df_daily = data.get_df_periods(data_series='daily')
         
@@ -59,9 +57,17 @@ class AppMenuInterface:
         
     def plot_weekly_hours(self):
         logger.info(f"Plotting daily hours graph")
+        config = None
+        with open('config.json', 'r') as file:
+            config = json.load(file)
+        
+        current_course_file = config['Current year']['csv name']
+        current_course = config[current_course_file]['Course Name']
+        logger.debug(f"Current course selected={str(current_course)}")
+
         df_weekly = data.get_df_periods(data_series='weekly')
 
-        dan.plot_week_hours_barchart(df_weekly)
+        dan.plot_week_hours_barchart(df_weekly, current_course=current_course)
 
 class StartSequence:
     def start_sequence_check(self):
@@ -120,7 +126,7 @@ class StartSequence:
         df_daily = dimp.basic_to_daily_clean(df)
         data.add_subject_hours(df_daily)
 
-        weekly_df = dimp.generate_weekly_hours_dataframe(df)
+        weekly_df = dimp.basic_to_weekly_df(df)
         data.add_weekly_hours(weekly_df)
         return True
 
@@ -150,7 +156,7 @@ class StartSequence:
             tm.select_table(table_opt='day')
             tm.upsert_to_table(df=df_daily, unique_cols=unique_cols)
         
-        weekly_df = dimp.generate_weekly_hours_dataframe(df)
+        weekly_df = dimp.basic_to_weekly_df(df)
         with tm:
             unique_cols = ['Period', 'Week', 'Subject']
             tm.select_table(table_opt='week')

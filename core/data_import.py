@@ -321,7 +321,7 @@ def basic_to_daily_clean(df_clean):
 
     return df
 
-def generate_weekly_hours_dataframe(df_clean):
+def basic_to_weekly_df(df_clean):
     ''' '''
     logger.debug(f"generating weekly hours")
     wanted_cols = ['Course', 'Period', 'Subject', 'Time Spent (Hrs)', 'Start Date', 'End Date', 'Start Time', 'End Time']
@@ -334,17 +334,21 @@ def generate_weekly_hours_dataframe(df_clean):
     df['Week'] = df['Start Date'].dt.to_period('W-SUN').astype(str)
 
     df = df.groupby(['Course', 'Period', 'Subject', 'Week'])['Time Spent (Hrs)'].sum().reset_index()
-        
+    
     df = df.sort_values(by='Week').reset_index(drop=True)
-    min_week = pd.Period(df['Week'].min(), freq='W-SUN')
-    max_week = pd.Period(df['Week'].max(), freq='W-SUN')
+    
+    df_list = []
+    for period in df['Period'].unique():
+        period_df = df[df['Period'] == period].copy()  # Explicitly create a copy
+        min_week = pd.Period(period_df['Week'].min(), freq='W-SUN')
+        max_week = pd.Period(period_df['Week'].max(), freq='W-SUN')
+        week_range = pd.period_range(start=min_week, end=max_week, freq='W-SUN')
 
-    # Generate the full range of weeks
-    week_range = pd.period_range(start=min_week, end=max_week, freq='W-SUN')
-
-    # Create a mapping of week to enumeration
-    week_enum = {str(week): i+1 for i, week in enumerate(week_range)}
-    df['Week Number'] = df['Week'].map(week_enum)
+        week_enum = {str(week): i+1 for i, week in enumerate(week_range)}
+        period_df['Week Number'] = period_df['Week'].map(week_enum)
+        df_list.append(period_df)
+    
+    df = pd.concat(df_list, ignore_index=True)
 
     return df
 

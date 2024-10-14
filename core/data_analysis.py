@@ -109,27 +109,37 @@ def plot_daily_subj_hours_line(df, current_course=None, add_avg=False, roll_avg=
     plt.tight_layout()
     plt.show()
 
-def plot_week_hours_barchart(df):
-    # from matplotlib.ticker import MaxNLocator
+def plot_week_hours_barchart(df, current_course):
+    def get_past_avg(df, current_course):
+        ''' 
+            - Takes the df related to past courses that also contain > 0 hours
+            - Groups them as normally by their week number, separating by course and period.
+            - Groups them again as average.
+        '''
+        df_past = df[(df['Course'] != current_course) & (df['Time Spent (Hrs)'] != 0)].copy()
+        df_past = df_past.groupby(['Course', 'Period', 'Week Number'])['Time Spent (Hrs)'].sum().reset_index()
+        df_past = df_past.groupby(['Week Number'])['Time Spent (Hrs)'].mean()
 
-    df_pivot = df.pivot_table(index='Week Number', columns=['Course', 'Period'], values='Time Spent (Hrs)', fill_value=0) # 
-    df_pivot = df_pivot.sort_index()
-
-    print(df_pivot)
-
-    fig, axes = plt.subplots()
-    # bottom = None
-    for column in df_pivot.columns:
-        axes.bar(df_pivot.index, df_pivot[column]) # , bottom=bottom 
-        # if bottom is None:
-        #     bottom = df_pivot[column]
-        # else:
-        #     bottom += df_pivot[column]
+        return df_past
     
-    # locator = MaxNLocator(nbins=8) # manual set of ticks
-    # axes.xaxis.set_major_locator(locator)
-    # plt.xticks(rotation=45)
-    # plt.legend(loc='upper left', labelcolor='0.8', frameon=False) 
+    df_current = df[(df['Course'] == current_course)].copy()
+    df_current = df_current.groupby(['Week Number'])['Time Spent (Hrs)'].sum()
+
+    df_past = get_past_avg(df, current_course)
+    
+    print(df_current)
+    print(df_past)
+    
+    fig, ax = plt.subplots(figsize=(11, 6))
+
+    ax.bar(df_past.index, df_past.values, label=f'Past Courses') # , align='edge'
+    ax.bar(df_current.index, df_current.values, label=f'Current Course')
+
+    ax.set_xlabel('Week Number')
+    ax.set_ylabel('Average Time Spent (Hrs)')
+    ax.set_xlim(left=0, right=df_past.index.max() + 1)
+    ax.set_xticks(range(1, df_past.index.max() + 1))
+    ax.set_xticklabels(range(1, df_past.index.max() + 1))
     plt.tight_layout()
     
     plt.show()
