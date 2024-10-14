@@ -84,10 +84,10 @@ class StartSequence:
                 
         if has_rows:
             logger.info(f"Database contains existing data.")
-            df, file_name = self.select_current_year()
-            df_edit = self.edit_course_params(df=df, file_name=file_name)
-            self.upsert_current_year_table(df=df_edit)
-            return None
+            # df, file_name = self.select_current_year()
+            # df_edit = self.edit_course_params(df=df, file_name=file_name)
+            # self.upsert_current_year_table(df=df_edit)
+            # return None
 
     def autoimport_past_from_json(self,past_courses):
         for course_file in past_courses:
