@@ -104,7 +104,7 @@ def plot_daily_subj_hours_line(df, current_course=None, add_avg=False, roll_avg=
     ax.set_facecolor('#444444')
     
     plt.xticks(rotation=45)
-    # #747474
+
     ax.legend(loc='upper left', labelcolor='0.8', frameon=False) # , framealpha=0.2
     plt.tight_layout()
     plt.show()
@@ -121,25 +121,53 @@ def plot_week_hours_barchart(df, current_course):
         df_past = df_past.groupby(['Week Number'])['Time Spent (Hrs)'].mean()
 
         return df_past
-    
+
+    def get_past_percentiles(df, current_course, top=0.75, bottom=0.25):
+        df_past = df[(df['Course'] != current_course) & (df['Time Spent (Hrs)'] != 0)].copy()
+        df_past = df_past.groupby(['Course', 'Period', 'Week Number'])['Time Spent (Hrs)'].sum().reset_index()
+
+        df_top_perc = df_past.groupby(['Week Number'])['Time Spent (Hrs)'].quantile(top)
+        df_bottom_perc = df_past.groupby(['Week Number'])['Time Spent (Hrs)'].quantile(bottom)
+
+        return df_top_perc, df_bottom_perc
+
     df_current = df[(df['Course'] == current_course)].copy()
     df_current = df_current.groupby(['Week Number'])['Time Spent (Hrs)'].sum()
 
-    df_past = get_past_avg(df, current_course)
+    df_past_avg = get_past_avg(df, current_course)
     
-    print(df_current)
-    print(df_past)
-    
+    top_perc = 0.75
+    bottom_perc = 0.25
+    df_top_perc, df_bottom_perc = get_past_percentiles(df, current_course,top=top_perc, bottom=bottom_perc)
+
     fig, ax = plt.subplots(figsize=(11, 6))
 
-    ax.bar(df_past.index, df_past.values, label=f'Past Courses') # , align='edge'
+    fig.set_facecolor('#444444') 
+    ax.set_facecolor('#444444')
+
+    pastavg_line_params = {
+        'alpha':        0.8,
+        'color':        '0.7',
+        'ls':           '-', 
+        'linewidth':    1.5,
+    }  
+    
+    ax.plot(df_past_avg.index, df_past_avg.values, label=f'Past Courses', **pastavg_line_params)
+    ax.plot(df_top_perc.index, df_top_perc.values, label=f'Top {top_perc}', color='0.6', alpha=0.5, linewidth=1)
+    ax.plot(df_bottom_perc.index, df_bottom_perc.values, label=f'Bottom {bottom_perc}', color='0.6', alpha=0.5, linewidth=1)
+
     ax.bar(df_current.index, df_current.values, label=f'Current Course')
 
-    ax.set_xlabel('Week Number')
-    ax.set_ylabel('Average Time Spent (Hrs)')
-    ax.set_xlim(left=0, right=df_past.index.max() + 1)
-    ax.set_xticks(range(1, df_past.index.max() + 1))
-    ax.set_xticklabels(range(1, df_past.index.max() + 1))
+    ax.set_xlabel('Week Number', color='0.8')
+    ax.set_ylabel('Average Time Spent (Hrs)', color='0.8')
+    ax.set_xlim(left=0, right=df_past_avg.index.max() + 1)
+
+    ax.tick_params(colors='0.8')
+    ax.set_xticks(range(1, df_past_avg.index.max() + 1))
+    ax.set_xticklabels(range(1, df_past_avg.index.max() + 1))
+
+    ax.legend(loc='upper left', labelcolor='0.8', frameon=False)
+
     plt.tight_layout()
     
     plt.show()
