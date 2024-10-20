@@ -40,14 +40,7 @@ class AppMenuInterface:
         import pandas as pd
 
         df = data.get_df_periods(data_series='daily')
-
-        # config = None
-        # with open('config.json', 'r') as file:
-        #     config = json.load(file)
-        
-        # current_course_file = config['Current year']['csv name']
-        # current_course = config[current_course_file]['Course Name']
-        
+                
         df_sum = df.groupby('Date', as_index=False)['Time Spent (Hrs)'].sum()
 
         last_day = pd.to_datetime(df_sum['Date'].max()).strftime('%d-%m-%Y')

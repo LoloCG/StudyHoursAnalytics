@@ -85,7 +85,6 @@ def select_current_year_file():
     return folder_path, file_name
     
 def show_and_select_csv(): # No longer used
-    # print("Database does not contain any data.\nSelect file to import.")
     files = []
     for item in input_folder_path.iterdir():
         files.append(item.name)
@@ -180,91 +179,18 @@ def edit_course_params(df, file=None):
 
     if file is not None and config_file.exists():
         config = None
-        logger.debug(f"trying to search {file} in JSON")
+        logger.debug(f"Searching for {file} in JSON")
         with open(config_file, 'r') as j_file:
             config = json.load(j_file)
 
         if file in config:
             df = update_df_with_json_config(df, config, file)
             return df
+
         else:  
             logger.error(f"{file} not found in JSON")
     else: 
         logger.error(f"Json file does not exist")
-
-    json_config_params = {}
-    json_config_params[file] = {}
-
-    if file is not None: logger.info(f"Select course name for {file}.")
-    else: logger.info(f"Select course name for current selected file")
-    course_name = input("Course name: ")
-    df['Course'] = course_name
-
-    json_config_params[file]["Course Name"] = course_name
-    periods_maintained = []
-    while True:
-        periods = df['Period'].unique()
-        logger.info(f"Edit periods in the course?:")
-        choice = clin.ask_loop_show_and_select_options(periods, exit_msg='Continue.')
-        if choice == None: 
-            json_config_params[file]["Periods maintained"] = periods_maintained
-            json_upsert(config_file, json_config_params)
-            return df
-        
-        keep_period = input(f"Do you want to keep the period '{periods[choice-1]}'? (Y/N): ").lower()
-
-        if keep_period == "n":
-            df = df[df['Period'] != periods[choice-1]]
-            logger.debug(f"Period '{periods[choice-1]}' removed from dataset.")
-            try:
-                periods_maintained.remove(periods[choice-1])
-            except:
-                continue
-            continue
-        else:
-            periods_maintained.append(periods[choice-1])
-
-        json_config_params[file][periods[choice-1]] = {}
-
-        name_change_ask = input(f"Do you want to re-name the period '{periods[choice-1]}'? (Y/N): ").lower()
-        if name_change_ask == "y":
-            new_period_name = input(f"New name: ")
-            df.loc[df['Period'] == periods[choice-1], 'Period'] = new_period_name
-            logger.debug(f"Period '{periods[choice-1]}' has been renamed to '{new_period_name}'.")
-            period_name = new_period_name
-            
-        else: 
-            period_name = periods[choice-1]
-
-        json_config_params[file][periods[choice-1]]["Period name"] = period_name
-
-        earliest_date = df.loc[df['Period'] == period_name, 'Start Date'].min().strftime('%a, %d %b %Y') #.strftime('%d-%m-%Y')
-        logger.debug(f"Start date of {period_name} = {earliest_date}")
-        
-        adjust_date = input(f"Do you want to adjust the start date? (Y/N): ").lower()
-        
-        if adjust_date == "y":
-            new_start_date_str = input("Enter the new start date (DD-MM-YY): ")
-            new_start_date = pd.to_datetime(new_start_date_str, dayfirst=True).date()
-
-            new_row = {
-                'Period':           period_name, 
-                'Start Date':       (new_start_date), # the format that is required is 2023-07-18
-                'Start Time':       '00:00',
-                'Time Spent (Hrs)': 0,
-                'End Date':	        new_start_date,
-                'End Time':         '00:00',
-            } 
-
-            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-            logger.debug(f"Start date for period '{period_name}' updated to {new_start_date.strftime('%a, %d %b %Y')}.")
-
-            json_config_params[file][periods[choice-1]]["Start date"] = new_start_date.strftime('%Y-%m-%d')
-
-        else:
-            json_config_params[file][periods[choice-1]]["Start date"] = earliest_date
-        
-        df.loc[:, 'Course'] = df['Course'].ffill()
 
 def basic_to_daily_clean(df_clean):
     ''' '''
@@ -295,7 +221,7 @@ def basic_to_daily_clean(df_clean):
         return df_merged
     
     logger.debug(f"Converting basic data to daily data.")
-
+    
     wanted_cols = ['Course', 'Period', 'Subject', 'Time Spent (Hrs)', 'Start Date']
     df = df_clean[wanted_cols]
 
@@ -308,11 +234,9 @@ def basic_to_daily_clean(df_clean):
         df_filled = fill_missing_days(df=df, period=period)
         df_list.append(df_filled)
 
-    # Concatenates the list of df made by the iteration
     df = pd.concat(df_list, ignore_index=True)
     
-    # changes the date into the chosen format
-    df['Date'] = pd.to_datetime(df['Start Date']).dt.date #.dt.strftime('%d/%m/%Y')
+    df['Date'] = pd.to_datetime(df['Start Date']).dt.date
     df = df.drop(columns=['Start Date'])
 
     df['Course'] = df['Course'].ffill()
