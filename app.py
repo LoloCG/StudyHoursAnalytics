@@ -37,16 +37,14 @@ class AppMenuInterface:
         start_seq.upsert_current_year_table(df=df_edit)
 
     def get_basic_stats(self):
-        import pandas as pd
-
         df = data.get_df_periods(data_series='daily')
                 
-        df_sum = df.groupby('Date', as_index=False)['Time Spent (Hrs)'].sum()
+        stats = dan.get_basic_stats(df)
 
-        last_day = pd.to_datetime(df_sum['Date'].max()).strftime('%d-%m-%Y')
-        last_day_tot_hours = df_sum.loc[df_sum['Date'].idxmax(), 'Time Spent (Hrs)']
-
-        print(f"last day: {last_day}, with {last_day_tot_hours}")
+        for key, val in stats.items():
+            print(f"{key} = {val}")
+        # print(f"last day: {stats['last_day'].key}, with {stats['last_day']}")
+        # print(f"Before: {stats['last_day'].key}, with {stats['last_day']}")
         
     def plot_weekly_hours(self):
         logger.info(f"Plotting daily hours graph")

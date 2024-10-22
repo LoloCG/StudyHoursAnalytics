@@ -4,6 +4,36 @@ from PyLogger.basic_logger import LoggerSingleton
 
 logger = LoggerSingleton().get_logger()
 
+def get_basic_stats(df):
+    def get_daily_stats(df):
+        stats = {}
+        df_sum = df.groupby('Date', as_index=False)['Time Spent (Hrs)'].sum()
+        
+        df_sum['Date'] = pd.to_datetime(df_sum['Date'])
+
+        # Get the top 2 largest dates
+        top_2_dates = df_sum['Date'].nlargest(2)
+
+        last_day = top_2_dates.iloc[0].strftime('%d-%m-%Y')
+        last_day_tot_hours = df_sum.loc[df_sum['Date'] == top_2_dates.iloc[0], 'Time Spent (Hrs)'].values[0]
+
+        day_before = top_2_dates.iloc[1].strftime('%d-%m-%Y')
+        day_before_tot_hours = df_sum.loc[df_sum['Date'] == top_2_dates.iloc[1], 'Time Spent (Hrs)'].values[0]
+
+        stats['last_day'] = last_day
+        stats['last_day_tot_hours'] = last_day_tot_hours
+        stats['day_before-1'] = day_before
+        stats['day_before_tot_hours'] = day_before_tot_hours
+
+        return stats
+    
+    def get_weekly_stats(df):
+        pass
+    
+    stats = get_daily_stats(df)
+
+    return stats
+
 def plot_daily_subj_hours_line(df, current_course=None, add_avg=False, roll_avg=None):
     import matplotlib.patheffects as path_effects # prev PathEffects
     from matplotlib.ticker import MaxNLocator
