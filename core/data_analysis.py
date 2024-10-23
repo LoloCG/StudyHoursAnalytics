@@ -41,17 +41,36 @@ def plot_daily_subj_hours_line(df, current_course=None, add_avg=False, roll_avg=
     '''
         Plots a line chart showing the time spent on different subjects over a period of time.
     '''
-    df = df.sort_values(by='Date')
-    logger.info(f"last day in plot: {pd.to_datetime(df['Date'].max()).strftime('%d-%m-%Y')} in {df.loc[df['Date'].idxmax(), 'Course']}")
+    def avg_past_courses(df, current_course):
+        df_past = df[(df['Course'] != current_course)].copy()
 
-    df = df[['Course','Period', 'Day', 'Time Spent (Hrs)']]
-    
-    if add_avg:
-        df_avg = df.groupby('Day', as_index=False)['Time Spent (Hrs)'].mean()
+        df_avg = df_past.groupby('Day', as_index=False)['Time Spent (Hrs)'].mean()
+
         df_avg['Course'] = 'Average'
         df_avg['Period'] = 'Average'
-        df = pd.concat([df, df_avg[['Course', 'Period', 'Day', 'Time Spent (Hrs)']]], axis=0, ignore_index=True)
-    
+        
+        return df_avg
+
+    def roll_avgs(df, period_list):
+        df_avg_list = []
+        for unique_period in period_list:
+            course, period = unique_period.split(';')
+            period_data = df[(df['Course'] == course) & (df['Period'] == period)].sort_values('Day')
+            period_data['Rolled Time Spent (Hrs)'] = period_data['Time Spent (Hrs)'].rolling(window=roll_avg, min_periods=1).mean()
+            df_avg_list.append(period_data)
+
+        df_rolled = pd.concat(df_avg_list, ignore_index=True)
+
+        return df_rolled
+
+    df = df.sort_values(by='Date')
+    df = df[['Course','Period', 'Day', 'Time Spent (Hrs)']]    
+    df = df.groupby(['Course', 'Period', 'Day'], as_index=False)['Time Spent (Hrs)'].sum().reset_index()
+
+    if add_avg:
+        df_avg_past = avg_past_courses(df, current_course)
+        df = pd.concat([df, df_avg_past[['Course', 'Period', 'Day', 'Time Spent (Hrs)']]], axis=0, ignore_index=True)
+
     period_list = [] 
     for course in df['Course'].unique():
         course_data = df[(df['Course'] == course)]
@@ -59,16 +78,9 @@ def plot_daily_subj_hours_line(df, current_course=None, add_avg=False, roll_avg=
             unique_period = str(course + ';' + period)
             period_list.append(unique_period)
 
-    if roll_avg is not None:
-        df_avg_list = []
-        for unique_period in period_list:
-            course, period = unique_period.split(';')
-            period_data = df[(df['Course'] == course) & (df['Period'] == period)].sort_values('Day')
-            period_data['Rolled Time Spent (Hrs)'] = period_data['Time Spent (Hrs)'].rolling(window=roll_avg, min_periods=1).mean()
-            df_avg_list.append(period_data)
-                
-        df = pd.concat(df_avg_list, ignore_index=True)
-
+    if roll_avg:
+        df = roll_avgs(df, period_list)
+        
     plt.style.use('bmh')
 
     fig, ax = plt.subplots(figsize=(11, 6))
